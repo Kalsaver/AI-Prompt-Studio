@@ -368,7 +368,7 @@
                         return __api_key;
                     }
                     // 임시 키가 없으면 사용자가 설정에 입력한 키를 사용합니다.
-                    return "AIzaSyC9Tlk6br5MPTcJC_opB1OaQBtlPy3hvAw";
+                    return this.settings.apiKey || "AIzaSyC9Tlk6br5MPTcJC_opB1OaQBtlPy3hvAw";
                 },
 
                 // 텍스트 생성 전용 게이트웨이
@@ -2060,11 +2060,12 @@
         });
     ">
 
-    <div class="container mx-auto p-6 max-w-7xl">
-        <header class="flex justify-between items-center mb-8">
+    <div class="container mx-auto p-4 sm:p-6 max-w-7xl">
+        <header class="flex justify-between items-center mb-6 sm:mb-8">
             <div class="w-10"></div>
             <div class="text-center">
-                <h1 class="text-5xl font-bold text-slate-900">AI 프롬프트 스튜디오</h1>
+                <!-- Responsive Font Size for Title -->
+                <h1 class="text-3xl sm:text-5xl font-bold text-slate-900">AI 프롬프트 스튜디오</h1>
             </div>
             <button id="settings-btn" class="text-slate-500 hover:text-blue-600 transition-colors w-10 h-10 flex items-center justify-center" title="설정" @click="$store.app.openModal('settings-modal')">
                 <span class="material-symbols-outlined text-3xl">settings</span>
@@ -2073,7 +2074,7 @@
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
             <div 
-                class="lg:col-span-1 bg-white px-4 py-6 rounded-2xl shadow-lg flex flex-col"
+                class="lg:col-span-1 bg-white p-4 sm:p-6 rounded-2xl shadow-lg flex flex-col"
                 >
                 <div class="flex justify-between items-center mb-4 border-b pb-2 border-slate-200">
                     <h2 class="text-2xl font-bold">🗂️ 키워드 뱅크</h2>
@@ -2215,7 +2216,7 @@
 
             <!-- Right Column: Prompt Canvas & Image Result -->
             <div class="lg:col-span-2 space-y-6">
-                <div id="prompt-canvas-container" class="bg-white p-6 rounded-2xl shadow-lg" :class="{'collapsed': $store.app.ui.isCanvasCollapsed}">
+                <div id="prompt-canvas-container" class="bg-white p-4 sm:p-6 rounded-2xl shadow-lg" :class="{'collapsed': $store.app.ui.isCanvasCollapsed}">
                     <div class="flex flex-wrap justify-between items-center mb-4 border-b pb-2 gap-2 border-slate-200">
                         <div class="flex items-center gap-4">
                             <div class="flex items-center gap-2 cursor-pointer" @click="$store.app.ui.isCanvasCollapsed = !$store.app.ui.isCanvasCollapsed">
@@ -2267,7 +2268,7 @@
                 </div>
                 
                 <!-- Image Attachment Area -->
-                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-lg">
                     <div class="flex flex-wrap justify-between items-center gap-y-2 mb-4 border-b pb-2 border-slate-200">
                         <div class="flex items-center gap-4">
                             <h2 class="text-2xl font-bold">🖼️ 이미지 첨부</h2>
@@ -2302,7 +2303,7 @@
                 </div>
 
                 <!-- Final Prompt & Image Result Area -->
-                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-lg">
                     <div class="flex justify-between items-center mb-2">
                         <div class="flex items-center gap-3">
                              <h2 class="text-2xl font-bold">최종 프롬프트</h2>
@@ -2419,14 +2420,14 @@
                             </a>
                         </div>
                         <div id="interactive-controls-container" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2" x-show="$store.app.ui.generatedImageUrl && !$store.app.ui.isLoadingImage" @click.outside="$store.app.ui.isInteractivePanelVisible = false" x-cloak>
+                            <!-- Responsive Interactive Panel -->
                             <div id="interactive-panel" 
-                                class="interactive-panel absolute bottom-full mb-2 bg-black/70 backdrop-blur-sm rounded-xl py-4 px-0.5 flex flex-row w-auto max-w-5xl" 
-                                x-show="$store.app.ui.isInteractivePanelVisible" x-transition x-cloak
-                                >
+                                class="interactive-panel absolute bottom-full mb-2 bg-black/70 backdrop-blur-sm rounded-xl p-2 flex w-full max-w-[90vw] lg:w-auto lg:max-w-5xl flex-col lg:flex-row max-h-[70vh] overflow-y-auto lg:overflow-y-hidden"
+                                x-show="$store.app.ui.isInteractivePanelVisible" x-transition x-cloak>
                                 <template x-for="(category, index) in $store.app.interactiveControlsLayout" :key="category.category">
-                                    <div class="flex">
-                                        <div class="text-white px-2" style="min-width: 270px;">
-                                            <h4 class="font-bold text-center text-lg mb-3" x-text="{subjectControl: '피사체 제어', cameraControl: '카메라 제어', imageTransform: '이미지 변환'}[category.category]"></h4>
+                                    <div class="flex flex-col lg:flex-row">
+                                        <div class="text-white px-2 w-full lg:min-w-[270px]">
+                                            <h4 class="font-bold text-center text-lg my-2 lg:mb-3" x-text="{subjectControl: '피사체 제어', cameraControl: '카메라 제어', imageTransform: '이미지 변환'}[category.category]"></h4>
                                             <template x-for="subcategory in category.subcategories" :key="subcategory.name">
                                                 <div class="flex items-start gap-2 my-2">
                                                     <p class="font-bold text-sm text-slate-300 w-16 text-right shrink-0 pt-1" x-text="{expression: '표정', props: '소품', action: '동작', rotation: '회전', environment: '환경', lens: '렌즈', zoom: '줌', angle: '앵글', style: '스타일', advancedEditing: '편집'}[subcategory.name]"></p>
@@ -2442,7 +2443,7 @@
                                                 </div>
                                             </template>
                                         </div>
-                                        <div x-show="index < $store.app.interactiveControlsLayout.length - 1" class="border-r border-white/20"></div>
+                                        <div x-show="index < $store.app.interactiveControlsLayout.length - 1" class="border-b lg:border-b-0 lg:border-r border-white/20 my-2 lg:my-0"></div>
                                     </div>
                                 </template>
                             </div>
@@ -2498,7 +2499,7 @@
                             </div>
                             <div class="space-y-2">
                                 <label class="text-white text-sm font-semibold">수정 내용:</label>
-                                <input type="text" placeholder="예: a cute silver tabby cat" x-model="inpaintingPrompt" class="w-full bg-slate-700 text-white p-2 rounded-md border border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                                <input type="text" placeholder="예: a cute cat" x-model="inpaintingPrompt" class="w-full bg-slate-700 text-white p-2 rounded-md border border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500">
                             </div>
                         </div>
                     </template>
@@ -2555,7 +2556,7 @@
     </div>
     
     <div id="settings-modal" x-show="$store.app.ui.activeModal === 'settings-modal'" x-transition class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-backdrop" @click.self="$store.app.closeModal()" x-cloak>
-        <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-xl">
+        <div class="bg-white p-4 sm:p-6 rounded-2xl shadow-lg w-full max-w-xl">
             <div class="flex justify-between items-center mb-6 border-b pb-3 border-slate-200">
                 <h3 class="text-2xl font-bold">⚙️ 설정</h3>
                 <button class="text-slate-500 hover:text-slate-800" @click="$store.app.closeModal()"><span class="material-symbols-outlined">close</span></button>
@@ -2811,6 +2812,4 @@
 
 </body>
 </html>
-
-
 
