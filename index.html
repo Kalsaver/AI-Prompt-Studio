@@ -1,0 +1,2814 @@
+<!DOCTYPE html>
+<html lang="ko" x-data>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 프롬프트 스튜디오</title>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {}
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.1/fabric.min.js"></script>
+ 
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <script>
+        document.addEventListener('alpine:init', () => {
+            const CONSTANTS = {
+                LOCAL_STORAGE_KEY: 'promptStudioData_v6.0_bank_renewal', // Version up
+                PROMPT_CHAR_LIMIT: 500,
+                IMAGE_SIZE_LIMIT_MB: 20,
+                GEMINI_SAFETY_SETTINGS: [
+                    { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
+                    { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" }
+                ],
+                INTERACTIVE_PROMPTS: {
+                    smile: 'a subtle smile on their face', sad: 'a subtle sad expression', surprised: 'a subtly surprised look', angry: 'a subtle expression of anger',
+                    glasses: 'wearing glasses', bag: 'carrying a bag', smartphone: 'holding and looking at a smartphone', book: 'holding an open book and reading',
+                    wave: 'waving hand', run: 'running pose', sit: 'sitting on a chair', jump: 'jumping',
+                    'rotate-left': 'turn the main subject slightly to the left, creating a gentle three-quarter view', 'rotate-right': 'turn the main subject slightly to the right, creating a gentle three-quarter view', 'rotate-180': 'turn the main subject 180 degrees to show the back',
+                    'replace-background': 'keep the main subject identical, but completely change the background to a new, fitting environment', 'change-weather': 'change the weather to a rainy day, with visible raindrops and wet surfaces', 
+                    'change-time': 'transform the time of day in the image to night, with appropriate lighting like moonlight or streetlights',
+                    'change-time-day': 'transform the time of day in the image to bright daylight, with clear skies and natural sunlight',
+                    bokeh: 'create a shallow depth of field with a blurred background (bokeh), focusing on the main subject', 'wide-angle': 'use a wide-angle lens for the shot, capturing more of the environment around the subject', fisheye: 'apply a fisheye lens effect for a distorted, spherical perspective',
+                    'zoom-in': 'zoom in, focus on the main subject', 'zoom-out': 'zoom out, show more of the surrounding', 'extreme-closeup': 'extreme close-up on the face, focusing on the eyes',
+                    'low-angle': "change the camera viewpoint to a dramatic low-angle shot from a worm's-eye view", 'high-angle': "change the camera viewpoint to a high-angle shot, looking down at the main subject", 'top-view': "change the camera viewpoint to a from above, top down view, bird's eye view",
+                    upscale: 'Upscale the provided image, enhancing details and clarity. Maintain the original subject, style, and composition, but increase the overall resolution and sharpness.',
+                    outpainting: "Perform an outpainting task based on the provided mask. The white area defines the content to preserve. The black area defines the empty space to be filled by seamlessly extending the original image.",
+                    inpainting: "The provided image contains a marked area. Change the content of the marked area based on the user's prompt. Do not change any part of the image outside the marked area.",
+                    'oil-painting-style': 'Reimagine the image as an oil painting with visible, thick brushstrokes (impasto). The colors should be rich and vibrant, capturing the essence of the original scene.',
+                    'anime-style': "Reimagine the image into an anime style, similar to a high-quality 'anime key visual'.",
+                    'comic-book-style': "Reimagine the image as a comic book illustration with clean, dynamic line work and dramatic cinematic lighting.",
+                    'pixel-art-style': "Reimagine the image as cute, 16-bit pixel art style, with a 'chibi' character sprite and a simplified background.",
+                    'id-photo': "You are provided with two images:\n- Image 1: A blank, pure white vertical canvas for the background.\n- Image 2: A portrait of a person.\n\nYour primary goal is to preserve the identity and all core facial features of the person in Image 2 while adjusting their portrait to meet the standards of a Korean ID photo on the white canvas of Image 1.\n\nModify the person from Image 2 with the following minimal adjustments:\n\n1. Pose & Composition: Adjust the pose to be strictly frontal. Center the subject on the canvas, ensuring proper headroom. Crucially, do not alter the subject's inherent facial structure.\n\n2. Expression: Subtly shift the facial expression to neutral with the mouth closed. Avoid any significant changes that would alter the person's likeness.\n\n3. Lighting & Tone: Balance the existing lighting to be even and frontal. Do not re-light from scratch. Your task is to soften or remove harsh shadows on the face and background while faithfully maintaining the original skin tone and facial details.\n\n4. Hair & Accessories: Ensure hair does not cover the eyes or eyebrows. Remove any non-essential items like hats, sunglasses, or headphones.\n\n5. Final Output: The result must clearly be the same person from Image 2, now presented as a high-quality, sharp, and clear studio-lit portrait."
+                },
+                INTERACTIVE_ICONS: {
+                    smile: 'sentiment_satisfied', sad: 'sentiment_dissatisfied', surprised: 'sentiment_very_dissatisfied', angry: 'sentiment_extremely_dissatisfied',
+                    glasses: 'eyeglasses', bag: 'trip', book: 'book_2', smartphone: 'smartphone',
+                    wave: 'waving_hand', run: 'directions_run', sit: 'chair_alt', jump: 'falling',
+                    'rotate-left': 'rotate_left', 'rotate-right': 'rotate_right', 'rotate-180': 'sync',
+                    'replace-background': 'background_replace', 'change-time-day': 'light_mode', 'change-time': 'dark_mode', 'change-weather': 'rainy',
+                    bokeh: 'blur_on', 'wide-angle': 'photo_camera', fisheye: 'camera',
+                    'zoom-in': 'zoom_in', 'zoom-out': 'zoom_out', 'extreme-closeup': 'center_focus_strong',
+                    'low-angle': "arrow_upward", 'high-angle': "arrow_downward", 'top-view': "keyboard_arrow_down",
+                    upscale: 'image_arrow_up', outpainting: 'photo_size_select_large', inpainting: 'draw',
+                    'oil-painting-style': 'brush', 'anime-style': 'face_3', 'comic-book-style': 'domino_mask', 'pixel-art-style': 'gradient',
+                    'id-photo': 'badge'
+                },
+                INTERACTIVE_RULES: {
+                    categories: {
+                        expression: ['smile', 'sad', 'surprised', 'angry'],
+                        props: ['glasses', 'bag', 'book', 'smartphone'],
+                        action: ['wave', 'run', 'sit', 'jump'],
+                        rotation: ['rotate-left', 'rotate-right', 'rotate-180'],
+                        environment: ['replace-background', 'change-weather', 'change-time', 'change-time-day'],
+                        lens: ['bokeh', 'wide-angle', 'fisheye'],
+                        zoom: ['zoom-in', 'zoom-out', 'extreme-closeup'],
+                        angle: ['low-angle', 'high-angle', 'top-view'],
+                        style: ['oil-painting-style', 'anime-style', 'comic-book-style', 'pixel-art-style'],
+                        advancedEditing: ['upscale', 'outpainting', 'inpainting', 'id-photo']
+                    }
+                }
+            };
+            
+            Alpine.data('keywordGroup', (group) => ({
+                group: group,
+                isAddingTab: false,
+                newTabName: '',
+                getKeywordsForActiveTab() {
+                    const activeTab = this.group.tabs.find(t => t.name === this.group.activeTab);
+                    if (!activeTab) return [];
+                    return activeTab.keywordIds.map(id => this.group.keywords.find(k => k.id === id)).filter(Boolean);
+                },
+                get filteredKeywords() {
+                    let keywords = this.getKeywordsForActiveTab();
+                    const searchTerm = Alpine.store('app').keywordBank.searchTerm;
+                    if (searchTerm) {
+                        const termLower = searchTerm.toLowerCase();
+                        keywords = keywords.filter(item => 
+                            item.keyword.toLowerCase().includes(termLower) ||
+                            (item.desc && item.desc.toLowerCase().includes(termLower))
+                        );
+                    }
+                    return keywords;
+                },
+                get filteredCount() {
+                    return this.group.keywords ? this.group.keywords.length : 0;
+                },
+                get hasSearchResults() {
+                    if (!Alpine.store('app').keywordBank.searchTerm) return true;
+                    
+                    const term = Alpine.store('app').keywordBank.searchTerm.toLowerCase();
+                    const groupName = this.group.isDefault ? { subject: '주제', details: '세부 묘사', style: '표현 기법', composition: '구도' }[this.group.id] : this.group.name;
+                    if (groupName && groupName.toLowerCase().includes(term)) return true;
+
+                    return this.group.tabs.some(tab => {
+                        if (tab.name.toLowerCase().includes(term)) return true;
+                        return tab.keywordIds.some(id => {
+                            const keyword = this.group.keywords.find(k => k.id === id);
+                            return keyword && (
+                                keyword.keyword.toLowerCase().includes(term) ||
+                                (keyword.desc && keyword.desc.toLowerCase().includes(term))
+                            );
+                        });
+                    });
+                },
+                confirmAddTab() {
+                    const name = this.newTabName.trim();
+                    if (!name) return;
+                    
+                    if (this.group && !this.group.tabs.some(t => t.name.toLowerCase() === name.toLowerCase())) {
+                        this.group.tabs.push({ name: name, keywordIds: [] });
+                        this.group.activeTab = name;
+                        Alpine.store('app').saveState(false);
+                    }
+                    this.isAddingTab = false;
+                    this.newTabName = '';
+                }
+            }));
+
+            Alpine.data('promptCanvasArea', (areaKey, title) => ({
+                key: areaKey,
+                title: title,
+                get keywords() {
+                    return Alpine.store('app').canvas[this.key] || [];
+                }
+            }));
+            
+            Alpine.store('app', {
+                constants: CONSTANTS,
+                keywordBank: { 
+                    defaultGroups: [
+                        { 
+                            id: 'subject', 
+                            keywords: [
+                                { id: 1001, type: 'keyword', keyword: 'man', desc: '남성' }, { id: 1002, type: 'keyword', keyword: 'woman', desc: '여성' }, { id: 1003, type: 'keyword', keyword: 'boy', desc: '소년' }, { id: 1004, type: 'keyword', keyword: 'girl', desc: '소녀' }, { id: 1005, type: 'keyword', keyword: 'old man', desc: '노인 (남)' }, { id: 1006, type: 'keyword', keyword: 'old woman', desc: '노인 (여)' }, { id: 1007, type: 'keyword', keyword: 'knight', desc: '기사' }, { id: 1008, type: 'keyword', keyword: 'wizard', desc: '마법사' }, { id: 1009, type: 'keyword', keyword: 'cyborg', desc: '사이보그' }, { id: 1010, type: 'keyword', keyword: 'elf', desc: '엘프' },
+                                { id: 1011, type: 'keyword', keyword: 'cat', desc: '고양이' }, { id: 1012, type: 'keyword', keyword: 'dog', desc: '개' }, { id: 1013, type: 'keyword', keyword: 'wolf', desc: '늑대' }, { id: 1014, type: 'keyword', keyword: 'fox', desc: '여우' }, { id: 1015, type: 'keyword', keyword: 'bird', desc: '새' }, { id: 1016, type: 'keyword', keyword: 'dragon', desc: '용' }, { id: 1017, type: 'keyword', keyword: 'phoenix', desc: '불사조' }, { id: 1018, type: 'keyword', keyword: 'unicorn', desc: '유니콘' },
+                                { id: 1019, type: 'keyword', keyword: 'cityscape', desc: '도시 풍경' }, { id: 1020, type: 'keyword', keyword: 'forest', desc: '숲' }, { id: 1021, type: 'keyword', keyword: 'ocean', desc: '대양' }, { id: 1022, type: 'keyword', keyword: 'mountains', desc: '산맥' }, { id: 1023, type: 'keyword', keyword: 'sky', desc: '하늘' }, { id: 1024, type: 'keyword', keyword: 'outer space', desc: '우주 공간' }, { id: 1025, type: 'keyword', keyword: 'ruins', desc: '폐허' }, { id: 1026, type: 'keyword', keyword: 'library', desc: '도서관' },
+                                { id: 1027, type: 'keyword', keyword: 'sword', desc: '검' }, { id: 1028, type: 'keyword', keyword: 'book', desc: '책' }, { id: 1029, type: 'keyword', keyword: 'spaceship', desc: '우주선' }, { id: 1030, type: 'keyword', keyword: 'car', desc: '자동차' }
+                            ], 
+                            collapsed: true, 
+                            isDefault: true,
+                            activeTab: '인물',
+                            tabs: [
+                                { name: '인물', keywordIds: [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009, 1010] },
+                                { name: '동물/신화', keywordIds: [1011, 1012, 1013, 1014, 1015, 1016, 1017, 1018] },
+                                { name: '배경/장소', keywordIds: [1019, 1020, 1021, 1022, 1023, 1024, 1025, 1026] },
+                                { name: '사물/탈것', keywordIds: [1027, 1028, 1029, 1030] }
+                            ]
+                        },
+                        { 
+                            id: 'details', 
+                            keywords: [
+                                { id: 2001, type: 'keyword', keyword: 'long hair', desc: '긴 머리' }, { id: 2002, type: 'keyword', keyword: 'short hair', desc: '짧은 머리' }, { id: 2003, type: 'keyword', keyword: 'blonde hair', desc: '금발' }, { id: 2004, type: 'keyword', keyword: 'red eyes', desc: '붉은 눈' }, { id: 2005, type: 'keyword', keyword: 'blue eyes', desc: '파란 눈' }, { id: 2006, type: 'keyword', keyword: 'glowing eyes', desc: '빛나는 눈' }, { id: 2007, type: 'keyword', keyword: 'muscular', desc: '근육질' }, { id: 2008, type: 'keyword', keyword: 'detailed face', desc: '상세한 얼굴' }, { id: 2009, type: 'keyword', keyword: 'jewelry', desc: '보석' }, { id: 2010, type: 'keyword', keyword: 'tattoo', desc: '문신' },
+                                { id: 2011, type: 'keyword', keyword: 'dress', desc: '드레스' }, { id: 2012, type: 'keyword', keyword: 'suit', desc: '정장' }, { id: 2013, type: 'keyword', keyword: 'armor', desc: '갑옷' }, { id: 2014, type: 'keyword', keyword: 'hoodie', desc: '후드티' }, { id: 2015, type: 'keyword', keyword: 'uniform', desc: '유니폼' }, { id: 2016, type: 'keyword', keyword: 'sunglasses', desc: '선글라스' }, { id: 2017, type: 'keyword', keyword: 'hat', desc: '모자' }, { id: 2018, type: 'keyword', keyword: 'boots', desc: '부츠' }, { id: 2019, type: 'keyword', keyword: 'cape', desc: '망토' },
+                                { id: 2020, type: 'keyword', keyword: 'smiling', desc: '미소짓는' }, { id: 2021, type: 'keyword', keyword: 'crying', desc: '우는' }, { id: 2022, type: 'keyword', keyword: 'looking at viewer', desc: '바라보는' }, { id: 2023, type: 'keyword', keyword: 'sitting', desc: '앉아있는' }, { id: 2024, type: 'keyword', keyword: 'standing', desc: '서있는' }, { id: 2025, type: 'keyword', keyword: 'running', desc: '달리는' }, { id: 2026, type: 'keyword', keyword: 'jumping', desc: '점프하는' }, { id: 2027, type: 'keyword', keyword: 'holding', desc: '들고있는' }, { id: 2028, type: 'keyword', keyword: 'glowing', desc: '빛나는' }
+                            ], 
+                            collapsed: true, 
+                            isDefault: true,
+                            activeTab: '외형',
+                            tabs: [
+                                { name: '외형', keywordIds: [2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010] },
+                                { name: '의상', keywordIds: [2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019] },
+                                { name: '표정/동작', keywordIds: [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028] }
+                            ]
+                        },
+                        { 
+                            id: 'style', 
+                            keywords: [
+                                { id: 3001, type: 'keyword', keyword: 'anime', desc: '애니메이션' }, { id: 3002, type: 'keyword', keyword: 'manga', desc: '만화' }, { id: 3003, type: 'keyword', keyword: 'concept art', desc: '컨셉 아트' }, { id: 3004, type: 'keyword', keyword: 'pixel art', desc: '픽셀 아트' }, { id: 3005, type: 'keyword', keyword: 'realistic', desc: '사실적인' }, { id: 3006, type: 'keyword', keyword: 'photorealistic', desc: '사진같은' }, { id: 3007, type: 'keyword', keyword: 'impressionism', desc: '인상주의' }, { id: 3008, type: 'keyword', keyword: 'ghibli style', desc: '지브리 스타일' },
+                                { id: 3009, type: 'keyword', keyword: 'fantasy', desc: '판타지' }, { id: 3010, type: 'keyword', keyword: 'sci-fi', desc: '공상과학' }, { id: 3011, type: 'keyword', keyword: 'cyberpunk', desc: '사이버펑크' }, { id: 3012, type: 'keyword', keyword: 'steampunk', desc: '스팀펑크' }, { id: 3013, type: 'keyword', keyword: 'horror', desc: '호러' }, { id: 3014, type: 'keyword', keyword: 'dystopian', desc: '디스토피아' }, { id: 3015, type: 'keyword', keyword: 'post-apocalyptic', desc: '포스트 아포칼립스' },
+                                { id: 3016, type: 'keyword', keyword: 'cinematic lighting', desc: '영화적 조명' }, { id: 3017, type: 'keyword', keyword: 'dramatic lighting', desc: '드라마틱 조명' }, { id: 3018, type: 'keyword', keyword: 'glowing', desc: '발광' }, { id: 3019, type: 'keyword', keyword: 'dark', desc: '어두운' }, { id: 3020, type: 'keyword', keyword: 'vibrant colors', desc: '생생한 색감' }, { id: 3021, type: 'keyword', keyword: 'monochrome', desc: '단색' }, { id: 3022, type: 'keyword', keyword: 'night', desc: '밤' },
+                                { id: 3023, type: 'keyword', keyword: 'oil painting', desc: '유화' }, { id: 3024, type: 'keyword', keyword: 'watercolor', desc: '수채화' }, { id: 3025, type: 'keyword', keyword: 'sketch', desc: '스케치' }, { id: 3026, type: 'keyword', keyword: '3d render', desc: '3D 렌더' }, { id: 3027, type: 'keyword', keyword: 'cel shading', desc: '셀 셰이딩' }
+                            ], 
+                            collapsed: true, 
+                            isDefault: true,
+                            activeTab: '화풍',
+                            tabs: [
+                                { name: '화풍', keywordIds: [3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008] },
+                                { name: '장르', keywordIds: [3009, 3010, 3011, 3012, 3013, 3014, 3015] },
+                                { name: '분위기', keywordIds: [3016, 3017, 3018, 3019, 3020, 3021, 3022] },
+                                { name: '매체', keywordIds: [3023, 3024, 3025, 3026, 3027] }
+                            ]
+                        },
+                        { 
+                            id: 'composition', 
+                            keywords: [
+                                { id: 4001, type: 'keyword', keyword: 'full body', desc: '전신 샷' }, { id: 4002, type: 'keyword', keyword: 'portrait', desc: '초상화' }, { id: 4003, type: 'keyword', keyword: 'close-up', desc: '클로즈업' }, { id: 4004, type: 'keyword', keyword: 'cowboy shot', desc: '카우보이 샷' }, { id: 4005, type: 'keyword', keyword: 'low angle', desc: '로우 앵글' }, { id: 4006, type: 'keyword', keyword: 'high angle', desc: '하이 앵글' }, { id: 4007, type: 'keyword', keyword: 'dynamic angle', desc: '역동적 앵글' }, { id: 4008, type: 'keyword', keyword: 'profile shot', desc: '측면 샷' },
+                                { id: 4009, type: 'keyword', keyword: 'masterpiece', desc: '걸작' }, { id: 4010, type: 'keyword', keyword: 'best quality', desc: '최고 품질' }, { id: 4011, type: 'keyword', keyword: '4k', desc: '4K 해상도' }, { id: 4012, type: 'keyword', keyword: '8k', desc: '8K 해상도' }, { id: 4013, type: 'keyword', keyword: 'high resolution', desc: '고해상도' }, { id: 4014, type: 'keyword', keyword: 'detailed', desc: '디테일한' }, { id: 4015, type: 'keyword', keyword: 'bokeh', desc: '보케 (배경 흐림)' }, { id: 4016, type: 'keyword', keyword: 'lens flare', desc: '렌즈 플레어' }, { id: 4017, type: 'keyword', keyword: 'motion blur', desc: '모션 블러' }
+                            ], 
+                            collapsed: true, 
+                            isDefault: true,
+                            activeTab: '샷/앵글',
+                            tabs: [
+                                { name: '샷/앵글', keywordIds: [4001, 4002, 4003, 4004, 4005, 4006, 4007, 4008] },
+                                { name: '품질/효과', keywordIds: [4009, 4010, 4011, 4012, 4013, 4014, 4015, 4016, 4017] }
+                            ]
+                        }
+                    ],
+                    userGroups: [],
+                    searchTerm: '',
+                    preSearchCollapsedState: null,
+                    preSearchActiveTabState: null,
+                    tabDeleteState: { active: false, groupId: null }
+                },
+                settings: { 
+                    apiKey: '', 
+                    aiKeywordSupport: true,
+                    referenceImageCount: 1,
+                    generationModel: 'gemini', // 'imagen' or 'gemini'
+                    seed: '',
+                    aspectRatio: '1:1',
+                    interpretationLevel: 'balanced', // 'precise', 'balanced', 'creative'
+                    numberOfImages: 1,
+                    negativePrompt: ''
+                },
+                canvas: { 
+                    subject: [], 
+                    details: [], 
+                    style: [], 
+                    composition: [], 
+                    manualPrompt: '', 
+                    activeKeywordIds: [],
+                    draggingItem: null
+                },
+                canvasAreaInfo: [
+                    { key: 'subject', title: '1. 주제 (Subject)' },
+                    { key: 'details', title: '2. 세부 묘사 (Details)' },
+                    { key: 'style', title: '3. 표현 기법 (Style)' },
+                    { key: 'composition', title: '4. 구도 (Composition)' }
+                ],
+                aspectRatioOptions: [
+                    { ratio: '1:1', desc: '정사각형' },
+                    { ratio: '4:3', desc: '사진 (가로)' },
+                    { ratio: '3:4', desc: '사진 (세로)' },
+                    { ratio: '16:9', desc: 'HD 영상 (가로)' },
+                    { ratio: '9:16', desc: '스마트폰 (세로)' }
+                ],
+                history: [],
+                presets: [],
+                attachments: { 
+                    images: [],
+                    draggingItem: null
+                },
+                ui: {
+                    manualPromptPosition: 'append',
+                    isCanvasCollapsed: false,
+                    selectedEffects: [],
+                    activeModal: null, 
+                    modalData: {},
+                    toast: {
+                        show: false,
+                        message: ''
+                    },
+                    isLoadingCompletion: false,
+                    isLoadingImage: false,
+                    isLoadingTranslation: false,
+                    generatedImageUrl: null,
+                    selectedImageId: null,
+                    isInteractivePanelVisible: false,
+                    historySearchTerm: '',
+                    presetSearchTerm: '',
+                    editingPresetId: null,
+                    isImageInfoPinned: false,
+                    currentImageInfo: { name: '', resolution: '', size: '' },
+                    moveMenu: { 
+                        visible: false, 
+                        top: 0, 
+                        left: 0, 
+                        keyword: null, 
+                        fromGroupId: null, 
+                        fromTabName: null 
+                    },
+                    addMenu: {
+                        visible: false,
+                        top: 0,
+                        left: 0,
+                        keyword: null
+                    }
+                },
+                interactiveControlsLayout: [
+                    {
+                        category: 'subjectControl',
+                        subcategories: [
+                            { name: 'expression', controls: ['smile', 'sad', 'surprised', 'angry'] },
+                            { name: 'props', controls: ['glasses', 'bag', 'book', 'smartphone'] },
+                            { name: 'action', controls: ['wave', 'run', 'sit', 'jump'] },
+                            { name: 'rotation', controls: ['rotate-right', 'rotate-left', 'rotate-180'] }
+                        ]
+                    },
+                    {
+                        category: 'cameraControl',
+                        subcategories: [
+                            { name: 'lens', controls: ['bokeh', 'wide-angle', 'fisheye'] },
+                            { name: 'zoom', controls: ['zoom-in', 'zoom-out', 'extreme-closeup'] },
+                            { name: 'angle', controls: ['low-angle', 'high-angle', 'top-view'] }
+                        ]
+                    },
+                    {
+                        category: 'imageTransform',
+                        subcategories: [
+                             { name: 'environment', controls: ['replace-background', 'change-time-day', 'change-time', 'change-weather'] },
+                             { name: 'style', controls: ['oil-painting-style', 'anime-style', 'comic-book-style', 'pixel-art-style'] },
+                             { name: 'advancedEditing', controls: ['upscale', 'outpainting', 'inpainting', 'id-photo'] }
+                        ]
+                    }
+                ],
+                
+                // --- Computed Properties ---
+                get promptLengthInfo() {
+                    const current = this.getFinalPrompt().length;
+                    const max = this.constants.PROMPT_CHAR_LIMIT;
+                    return {
+                        current,
+                        max,
+                        exceeds: current > max
+                    };
+                },
+                get referenceImagesSizeInfo() {
+                    const maxMB = this.constants.IMAGE_SIZE_LIMIT_MB;
+                    const imagesToConsider = this.attachments.images.slice(0, this.settings.referenceImageCount);
+                    if (imagesToConsider.length === 0) {
+                        return { current: 0, max: maxMB, exceeds: false };
+                    }
+                    // Simplified and more direct calculation of Base64 string size
+                    const totalBytes = imagesToConsider.reduce((sum, img) => {
+                        return sum + (img.dataUrl.length || 0);
+                    }, 0);
+
+                    const currentMB = totalBytes / (1024 * 1024);
+                    return {
+                        current: currentMB,
+                        max: maxMB,
+                        exceeds: currentMB > maxMB
+                    };
+                },
+                 get filteredHistory() {
+                    if (!this.ui.historySearchTerm) return this.history;
+                    const term = this.ui.historySearchTerm.toLowerCase();
+                    return this.history.filter(item => item.promptText.toLowerCase().includes(term));
+                },
+                get filteredPresets() {
+                    if (!this.ui.presetSearchTerm) return this.presets;
+                    const term = this.ui.presetSearchTerm.toLowerCase();
+                    return this.presets.filter(item => 
+                        item.name.toLowerCase().includes(term) ||
+                        item.promptText.toLowerCase().includes(term)
+                    );
+                },
+
+                // =================================================================
+                // API GATEWAY
+                // =================================================================
+                getApiKey() {
+                    // Canvas 환경에서 제공하는 임시 키를 우선적으로 확인합니다.
+                    if (typeof __api_key !== 'undefined' && __api_key) {
+                        return __api_key;
+                    }
+                    // 임시 키가 없으면 사용자가 설정에 입력한 키를 사용합니다.
+                    return this.settings.apiKey || "";
+                },
+
+                // 텍스트 생성 전용 게이트웨이
+                async callTextAPI(systemPrompt, userQuery, temperature = 1.0) {
+                    const apiKey = this.getApiKey();
+                    
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    const payload = {
+                        contents: [{ parts: [{ text: userQuery }] }],
+                        systemInstruction: { parts: [{ text: systemPrompt }] },
+                        safetySettings: this.constants.GEMINI_SAFETY_SETTINGS,
+                        generationConfig: {
+                            temperature: temperature
+                        }
+                    };
+
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json().catch(() => null);
+                        const message = errorData?.error?.message || `API Error: ${response.status}`;
+                        throw new Error(message);
+                    }
+
+                    const result = await response.json();
+                    const text = result.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                    if (text) {
+                        return text.replace(/```json|```/g, '').trim();
+                    } else {
+                        const reason = this.getFailureReason(result);
+                        const reasonMap = {
+                            recitation: "저작권", other: "기타", sexually_explicit: "성적 콘텐츠", hate_speech: "혐오 발언",
+                            harassment: "괴롭힘", dangerous_content: "폭력/위험"
+                        };
+                        if (reason !== 'other') {
+                             throw new Error(reasonMap[reason] || "알 수 없는 이유");
+                        }
+                        throw new Error("No content in API response.");
+                    }
+                },
+
+                // Gemini 이미지 모델(나노바나나) 전용 게이트웨이
+                async callImageAPI(prompt, images = [], mask = null, numberOfImages = 1) {
+                    const apiKey = this.getApiKey();
+
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image-preview:generateContent?key=${apiKey}`;
+                    
+                    const parts = [{ text: prompt }];
+                    images.forEach(image => parts.push({ inlineData: { mimeType: 'image/png', data: image.dataUrl.split(',')[1] } }));
+                    if (mask) {
+                        parts.push({ inlineData: { mimeType: 'image/png', data: mask.split(',')[1] } });
+                    }
+
+                    const payload = {
+                        contents: [{ parts }],
+                        generationConfig: { 
+                            responseModalities: ['IMAGE'],
+                            candidateCount: numberOfImages
+                        },
+                        safetySettings: this.constants.GEMINI_SAFETY_SETTINGS
+                    };
+
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+
+                    if (!response.ok) throw new Error(`API Error: ${response.status} ${await response.text()}`);
+                    return await response.json();
+                },
+
+                // Imagen 3 모델 전용 게이트웨이
+                async callImagenAPI(prompt, numberOfImages = 1, negativePrompt = '') {
+                    const apiKey = this.getApiKey();
+                    
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
+                    
+                    const parameters = { 
+                        "sampleCount": numberOfImages,
+                        "personGeneration": "ALLOW_ALL",
+                        "aspectRatio": this.settings.aspectRatio
+                    };
+
+                    if (this.settings.seed) {
+                        const seedNumber = parseInt(this.settings.seed, 10);
+                        if (!isNaN(seedNumber)) {
+                            parameters.seed = seedNumber;
+                        }
+                    }
+                    if(negativePrompt.trim()){
+                        parameters.negativePrompt = negativePrompt.trim();
+                    }
+
+                    const payload = { 
+                        instances: [{ prompt }], 
+                        parameters
+                    };
+                    
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    
+                    if (!response.ok) throw new Error(`API Error: ${response.status} ${await response.text()}`);
+                    return await response.json();
+                },
+                
+                // =================================================================
+                // AI-ASSISTED FUNCTIONS
+                // =================================================================
+                async callTranslationAPI(text) {
+                    const systemPrompt = "You are a machine translator. Your sole task is to translate the given text into a concise, lowercase English keyword suitable for an image generation AI. Do not add any explanations. The response MUST be a single JSON object with a single key 'translatedKeyword'.";
+                    const userQuery = `Translate the following text into a concise, lowercase English keyword:\n${text}\n\nResponse format:\n{"translatedKeyword": "..."}`;
+                    
+                    try {
+                        const jsonString = await this.callTextAPI(systemPrompt, userQuery, 0.5);
+                        const parsed = JSON.parse(jsonString);
+                        return parsed.translatedKeyword || text.trim().toLowerCase().replace(/\s+/g, ' ');
+                    } catch (error) {
+                        console.error("Translation API call failed:", error);
+                        this.showToast(`번역에 실패했습니다.: ${error.message}`);
+                        throw error;
+                    }
+                },
+
+                async callDescriptionAPI(keyword) {
+                    const lang = 'Korean';
+                    const systemPrompt = `You are a helpful assistant. Your task is to write a brief, one-sentence description for the given image generation keyword. The description should be in ${lang}. The response MUST be a single JSON object with a single key 'description'.`;
+                    const userQuery = `Create a description for the keyword "${keyword}".\n\nResponse format:\n{"description": "..."}`;
+
+                    try {
+                        const jsonString = await this.callTextAPI(systemPrompt, userQuery, 0.5);
+                        const parsed = JSON.parse(jsonString);
+                        return parsed.description || '';
+                    } catch (error) {
+                        console.error("Description API call failed:", error);
+                        throw error;
+                    }
+                },
+                
+                async translateManualPrompt() {
+                    const textToTranslate = this.canvas.manualPrompt.trim();
+                    if (!textToTranslate) {
+                        this.showToast("번역할 내용을 먼저 입력해주세요.");
+                        return;
+                    }
+
+                    this.ui.isLoadingTranslation = true;
+                    try {
+                        const systemPrompt = "You are a machine translator. Your sole task is to translate the given text. If the text is Korean, translate it to English. If it is English, translate it to Korean. Do not add any explanations. The response MUST be a single JSON object with a single key 'translatedText'.";
+                        const userQuery = `Translate:\n${textToTranslate}\n\nResponse format:\n{"translatedText": "..."}`;
+                        
+                        const jsonString = await this.callTextAPI(systemPrompt, userQuery, 0.5);
+                        const parsed = JSON.parse(jsonString);
+                        if (parsed.translatedText) {
+                            this.canvas.manualPrompt = parsed.translatedText;
+                        } else {
+                            throw new Error('Invalid JSON structure in translation response.');
+                        }
+                    } catch (error) {
+                        console.error("Translation Error:", error);
+                        this.showToast(`번역에 실패했습니다.: ${error.message}`);
+                    } finally {
+                        this.ui.isLoadingTranslation = false;
+                    }
+                },
+
+                async generatePromptSentence() {
+                    if (this.canvas.subject.length === 0) {
+                        this.showToast('먼저 "주제" 키워드를 추가해주세요.');
+                        return;
+                    }
+                    
+                    this.ui.isLoadingCompletion = true;
+                    try {
+                        let keywordText = ['subject', 'details', 'style', 'composition']
+                            .map(cat => `${cat.charAt(0).toUpperCase() + cat.slice(1)}: ${this.canvas[cat].map(k => k.keyword).join(', ')}`)
+                            .filter(line => !line.endsWith(': '))
+                            .join('\n');
+
+                        const systemPrompt = "You are a world-class prompt engineer. Combine the given English keywords into a single, creative, detailed descriptive sentence in English. The response must be a single JSON object with the key 'prompt'.";
+                        const userQuery = `Combine these keywords:\n${keywordText}\n\nExample format:\n{"prompt": "A dramatic low-angle shot..."}`;
+                        
+                        const jsonString = await this.callTextAPI(systemPrompt, userQuery, 1.0);
+                        if (jsonString) { // Check if callTextAPI returned something
+                            const parsed = JSON.parse(jsonString);
+                            if (parsed.prompt) {
+                                this.canvas.manualPrompt = parsed.prompt;
+                            } else {
+                                throw new Error('Invalid JSON structure in response.');
+                            }
+                        }
+                    } catch (error) {
+                        console.error("AI Prompt Completion Error:", error);
+                        this.showToast(`AI 프롬프트 완성 실패: ${error.message}`);
+                    } finally {
+                        this.ui.isLoadingCompletion = false;
+                    }
+                },
+                
+                // =================================================================
+                // UTILITY FUNCTIONS
+                // =================================================================
+                getIconForKey(key) {
+                    return this.constants.INTERACTIVE_ICONS[key] || 'help';
+                },
+
+                getFailureReason(result) {
+                    const geminiCandidate = result?.candidates?.[0];
+                    if (geminiCandidate) {
+                        if (geminiCandidate.finishReason === 'RECITATION') return 'recitation';
+                        if (geminiCandidate.finishReason === 'OTHER') return 'other';
+                        if (geminiCandidate.finishReason === 'SAFETY') {
+                            const blockedRating = geminiCandidate.safetyRatings?.find(r => r.blocked);
+                            if (blockedRating) return blockedRating.category.replace('HARM_CATEGORY_', '').toLowerCase();
+                        }
+                    }
+                    const imagenPrediction = result?.predictions?.[0];
+                    if (imagenPrediction?.safetyFeedback) {
+                        const blockedRating = imagenPrediction.safetyFeedback.safetyRatings?.find(r => r.blocked);
+                        if (blockedRating) return blockedRating.category.replace('HARM_CATEGORY_', '').toLowerCase();
+                    }
+                    return 'other';
+                },
+
+                getFinalPrompt() {
+                    const promptOrder = ['subject', 'details', 'style', 'composition'];
+                    const promptParts = promptOrder.map(areaKey => {
+                        const keywords = this.canvas[areaKey];
+                        return (keywords && keywords.length > 0) ? keywords.map(k => k.keyword).join(', ') : '';
+                    }).filter(Boolean);
+
+                    const manualPrompt = this.canvas.manualPrompt.trim();
+                    if (manualPrompt) {
+                        if (this.ui.manualPromptPosition === 'prepend') {
+                            promptParts.unshift(manualPrompt);
+                        } else {
+                            promptParts.push(manualPrompt);
+                        }
+                    }
+                    
+                    return promptParts.join(', ');
+                },
+                
+                showToast(message) {
+                    this.ui.toast.message = message;
+                    this.ui.toast.show = true;
+                    setTimeout(() => {
+                        this.ui.toast.show = false;
+                    }, 4000);
+                },
+
+                createBlankCanvas(width, height, color = '#FFFFFF') {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = width;
+                    canvas.height = height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.fillStyle = color;
+                    ctx.fillRect(0, 0, width, height);
+                    return canvas.toDataURL('image/png');
+                },
+
+                createBlankImageForRatio(ratioStr) {
+                    let targetWidth, targetHeight;
+                    switch (ratioStr) {
+                        case '4:3':   targetWidth = 1280; targetHeight = 896;  break;
+                        case '3:4':   targetWidth = 896;  targetHeight = 1280; break;
+                        case '16:9':  targetWidth = 1408; targetHeight = 768;  break;
+                        case '9:16':  targetWidth = 768;  targetHeight = 1408; break;
+                        case '1:1':
+                        default:
+                            return null; // Don't create for 1:1
+                    }
+                    return this.createBlankCanvas(targetWidth, targetHeight);
+                },
+
+                // =================================================================
+                // ATTACHMENT FUNCTIONS
+                // =================================================================
+                handleFileUpload(event) {
+                    const files = event.target.files;
+                    if (files.length === 0) return;
+                    Array.from(files).forEach(file => this.readFileAsDataURL(file));
+                    event.target.value = null;
+                },
+
+                readFileAsDataURL(file) {
+                    if (!file.type.startsWith('image/')) return;
+                    const reader = new FileReader();
+                    reader.onload = (e) => this.addAttachment(e.target.result, file.name);
+                    reader.onerror = () => this.showToast("파일을 읽는 중 오류가 발생했습니다.");
+                    reader.readAsDataURL(file);
+                },
+
+                addAttachment(imageDataUrl, fileName = 'pasted_or_drawn_image.png') {
+                    if (this.attachments.images.length >= 20) { // Increased to 20
+                        this.showToast("이미지는 최대 20장까지 첨부할 수 있습니다.");
+                        return;
+                    }
+                    const newImage = { id: Date.now() + Math.random(), dataUrl: imageDataUrl, name: fileName };
+                    this.attachments.images.push(newImage);
+                    this.selectImage(newImage);
+                },
+                
+                removeAttachment(id) {
+                    const wasCurrentlyDisplayed = this.ui.selectedImageId === id;
+                    const removedIndex = this.attachments.images.findIndex(img => img.id === id);
+
+                    this.attachments.images = this.attachments.images.filter(img => img.id !== id);
+
+                    if (wasCurrentlyDisplayed) {
+                        if (this.attachments.images.length > 0) {
+                            const newIndex = Math.min(removedIndex, this.attachments.images.length - 1);
+                            this.selectImage(this.attachments.images[newIndex]);
+                        } else {
+                            this.ui.generatedImageUrl = null;
+                            this.ui.selectedImageId = null;
+                        }
+                    }
+                },
+
+                selectImage(image) {
+                    if (this.ui.selectedImageId === image.id) {
+                        this.ui.selectedImageId = null;
+                        this.ui.generatedImageUrl = null;
+                    } else {
+                        this.ui.selectedImageId = image.id;
+                        this.ui.generatedImageUrl = image.dataUrl;
+                    }
+                },
+                
+                // =================================================================
+                // IMAGE GENERATION FUNCTIONS
+                // =================================================================
+                async generateImage() {
+                    let finalPrompt = this.getFinalPrompt();
+                    let imagesToSend = this.attachments.images.slice(0, this.settings.referenceImageCount);
+
+                    if (!finalPrompt && imagesToSend.length === 0) {
+                        this.showToast("프롬프트를 입력하거나 이미지를 첨부해주세요.");
+                        return;
+                    }
+                    
+                    this.ui.isLoadingImage = true;
+                    
+                    let modelToUse;
+                    if (imagesToSend.length > 0) {
+                        modelToUse = 'gemini';
+                    } else {
+                        modelToUse = this.settings.generationModel;
+                    }
+                    
+                    // Aspect ratio hack for Gemini T2I
+                    if (modelToUse === 'gemini' && this.settings.aspectRatio !== '1:1' && imagesToSend.length === 0) {
+                        const blankImage = this.createBlankImageForRatio(this.settings.aspectRatio);
+                        if (blankImage) {
+                            const hackImage = { dataUrl: blankImage, name: 'ratio_hack.png' };
+                            imagesToSend.unshift(hackImage);
+                        }
+                    }
+                    
+                    const level = this.settings.interpretationLevel;
+                    if (level === 'precise') {
+                        finalPrompt = `Prioritize a faithful representation of the provided inputs. The text prompt is a strict instruction for modification or detail. If a reference image is included, its core style, subject, and composition must be preserved as the primary foundation. The prompt is: ${finalPrompt}`;
+                    } else if (level === 'creative') {
+                        finalPrompt = `Use the provided inputs as creative inspiration. You have artistic freedom to dramatically reinterpret the style, composition, and mood, using the text prompt and any reference image as a starting point for a new, imaginative artwork. The prompt is: ${finalPrompt}`;
+                    }
+
+                    await this.generateImages(finalPrompt, imagesToSend, modelToUse);
+
+                    this.ui.isLoadingImage = false;
+                },
+
+                async generateImages(prompt, images, model) {
+                    try {
+                        let result;
+                        let historyMetadata = {};
+
+                        if (model === 'gemini') {
+                            if (images.length > 0 && images[0].name === 'ratio_hack.png') {
+                                prompt = "Draw the following scene on the provided canvas: " + prompt;
+                                result = await this.callImageAPI(prompt, [images[0]], null, this.settings.numberOfImages);
+                            } else {
+                                result = await this.callImageAPI(prompt, images, null, this.settings.numberOfImages);
+                                if(images.length > 0) {
+                                    historyMetadata.refFilename = images[0].name;
+                                }
+                            }
+                        } else {
+                            result = await this.callImagenAPI(prompt, this.settings.numberOfImages, this.settings.negativePrompt);
+                            const returnedSeed = result.predictions?.[0]?.seed;
+                            if (returnedSeed) {
+                                this.settings.seed = returnedSeed;
+                                historyMetadata.seed = returnedSeed;
+                            }
+                        }
+                        
+                        const candidates = model === 'gemini' ? result.candidates : result.predictions;
+
+                        if (candidates && candidates.length > 0) {
+                            const generatedImages = [];
+                            for (const candidate of candidates) {
+                                const imageData = model === 'gemini' 
+                                    ? candidate?.content?.parts?.[0]?.inlineData?.data
+                                    : candidate?.bytesBase64Encoded;
+                                
+                                if (imageData) {
+                                    const newImageUrl = `data:image/png;base64,${imageData}`;
+                                    const newImage = { id: Date.now() + Math.random(), dataUrl: newImageUrl, name: `generated_${Date.now()}.png` };
+                                    generatedImages.push(newImage);
+                                }
+                            }
+                            
+                            if (generatedImages.length > 0) {
+                                this.attachments.images.unshift(...generatedImages);
+                                this.ui.generatedImageUrl = generatedImages[0].dataUrl;
+                                this.ui.selectedImageId = generatedImages[0].id;
+                                this.addHistory('success', null, model, null, historyMetadata);
+                            } else {
+                                const reason = this.getFailureReason(result);
+                                this.addHistory('failure', reason, model, null, historyMetadata);
+                                this.showToast(`AI 안전 정책에 따라 요청이 거부되었습니다. (${reason})`);
+                            }
+                        } else {
+                            const reason = this.getFailureReason(result);
+                            this.addHistory('failure', reason, model, null, historyMetadata);
+                            this.showToast(`AI 안전 정책에 따라 요청이 거부되었습니다. (${reason})`);
+                        }
+                    } catch (error) {
+                        console.error("Image Generation Error:", error);
+                        this.addHistory('failure', 'technical', model);
+                        this.showToast(`이미지 생성 실패: ${error.message}`);
+                    }
+                },
+
+                // =================================================================
+                // KEYWORD BANK & CANVAS SYNC FUNCTIONS
+                // =================================================================
+                
+                handleKeywordClick(event, item, group) {
+                    const isUserKeyword = group && !group.isDefault;
+                    const isActive = this.canvas.activeKeywordIds.includes(item.id);
+
+                    if (isActive) {
+                        this.removeKeywordFromAllAreas(item.id);
+                    } else {
+                        if (isUserKeyword) {
+                            this.openAddMenu(event, item);
+                        } else {
+                            this.addKeywordToCanvas(item, group.id);
+                        }
+                    }
+                },
+
+                addKeywordToCanvas(item, areaKey) {
+                    if (this.canvas[areaKey]) {
+                        const newKeywordInstance = { ...item, instanceId: Date.now() + Math.random() };
+                        this.canvas[areaKey].push(newKeywordInstance);
+                        this.updateActiveKeywordIds();
+                    }
+                },
+
+                removeKeywordFromAllAreas(keywordId) {
+                    let removedKeywordName = '';
+                    ['subject', 'details', 'style', 'composition'].forEach(areaKey => {
+                        this.canvas[areaKey] = this.canvas[areaKey].filter(k => {
+                            if (k.id === keywordId) {
+                                removedKeywordName = k.keyword;
+                                return false;
+                            }
+                            return true;
+                        });
+                    });
+                    this.updateActiveKeywordIds();
+                },
+                
+                removeKeywordFromCanvas(instanceId) {
+                    let keywordIdToRemove = null;
+                    let removedKeywordName = '';
+                    ['subject', 'details', 'style', 'composition'].forEach(areaKey => {
+                        this.canvas[areaKey] = this.canvas[areaKey].filter(k => {
+                            if (k.instanceId === instanceId) {
+                                keywordIdToRemove = k.id;
+                                removedKeywordName = k.keyword;
+                                return false;
+                            }
+                            return true;
+                        });
+                    });
+                    if (keywordIdToRemove) {
+                        this.updateActiveKeywordIds();
+                    }
+                },
+
+                updateActiveKeywordIds() {
+                    const allCanvasKeywordIds = ['subject', 'details', 'style', 'composition']
+                        .flatMap(areaKey => this.canvas[areaKey].map(k => k.id));
+                    this.canvas.activeKeywordIds = [...new Set(allCanvasKeywordIds)];
+                },
+                
+                // =================================================================
+                // KEYWORD BANK MANAGEMENT (Pop-over Menu)
+                // =================================================================
+                openMoveMenu(event, item, group) {
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    this.ui.moveMenu = {
+                        visible: true,
+                        top: rect.bottom + window.scrollY,
+                        left: rect.left + window.scrollX,
+                        keyword: item,
+                        fromGroupId: group.id,
+                        fromTabName: group.activeTab
+                    };
+                },
+
+                closeMoveMenu() {
+                    this.ui.moveMenu.visible = false;
+                },
+                
+                openAddMenu(event, item) {
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    this.ui.addMenu = {
+                        visible: true,
+                        top: rect.bottom + window.scrollY,
+                        left: rect.left + window.scrollX,
+                        keyword: item,
+                    };
+                },
+
+                closeAddMenu() {
+                    this.ui.addMenu.visible = false;
+                },
+
+                moveKeyword(toGroupId, toTabName) {
+                    const { keyword, fromGroupId, fromTabName } = this.ui.moveMenu;
+                    if (!keyword) return;
+
+                    const allGroups = [...this.keywordBank.defaultGroups, ...this.keywordBank.userGroups];
+                    const fromGroup = allGroups.find(g => g.id === fromGroupId);
+                    const toGroup = allGroups.find(g => g.id === toGroupId);
+
+                    if (!fromGroup || !toGroup) return;
+
+                    const fromTab = fromGroup.tabs.find(t => t.name === fromTabName);
+                    if (!fromTab) return;
+
+                    const fromKeywordIdIndex = fromTab.keywordIds.indexOf(keyword.id);
+                    if (fromKeywordIdIndex === -1) return;
+
+                    // 1. Remove from source
+                    fromTab.keywordIds.splice(fromKeywordIdIndex, 1);
+
+                    // 2. Move keyword data if group changes
+                    if (fromGroupId !== toGroupId) {
+                        const keywordDataIndex = fromGroup.keywords.findIndex(k => k.id === keyword.id);
+                        if (keywordDataIndex > -1) {
+                            const [keywordData] = fromGroup.keywords.splice(keywordDataIndex, 1);
+                            toGroup.keywords.push(keywordData);
+                        }
+                    }
+
+                    // 3. Add to destination
+                    const toTab = toGroup.tabs.find(t => t.name === toTabName);
+                    if (!toTab) {
+                        fromTab.keywordIds.splice(fromKeywordIdIndex, 0, keyword.id); // Revert
+                        return;
+                    }
+                    toTab.keywordIds.unshift(keyword.id);
+
+                    // 4. Reset state and save
+                    this.closeMoveMenu();
+                    this.saveState(false);
+                    this.showToast(`'${keyword.keyword}' 키워드를 이동했습니다.`);
+                },
+
+                toggleTabDeleteMode(groupId) {
+                    const state = this.keywordBank.tabDeleteState;
+                    if (state.active && state.groupId === groupId) {
+                        state.active = false;
+                        state.groupId = null;
+                    } else {
+                        state.active = true;
+                        state.groupId = groupId;
+                    }
+                },
+
+                deleteTabFromGroup(groupId, tabName) {
+                    const data = {
+                        groupId: groupId,
+                        tabName: tabName,
+                        confirmMessage: `'${tabName}' 탭을 삭제하시겠습니까? 탭 안의 키워드도 모두 삭제됩니다.`
+                    };
+                    this.openModal('delete-tab-confirm-modal', data);
+                },
+
+                confirmDeleteTab() {
+                    const { groupId, tabName } = this.ui.modalData;
+                    const allGroups = [...this.keywordBank.defaultGroups, ...this.keywordBank.userGroups];
+                    const group = allGroups.find(g => g.id === groupId);
+                    if (group) {
+                        const tabIndex = group.tabs.findIndex(t => t.name === tabName);
+                        if (tabIndex > -1) {
+                            const [deletedTab] = group.tabs.splice(tabIndex, 1);
+                            group.keywords = group.keywords.filter(k => !deletedTab.keywordIds.includes(k.id));
+                            if (group.activeTab === tabName && group.tabs.length > 0) {
+                                group.activeTab = group.tabs[0].name;
+                            }
+                        }
+                    }
+                    this.keywordBank.tabDeleteState = { active: false, groupId: null };
+                    this.saveState();
+                    this.closeModal();
+                },
+
+                async addNewKeyword(keywordInput, descInput) {
+                    if (!keywordInput || !keywordInput.trim()) {
+                        this.showToast("키워드 이름을 입력해주세요.");
+                        return;
+                    }
+
+                    this.ui.isLoadingCompletion = true;
+                    try {
+                        const userGroups = this.keywordBank.userGroups;
+                        if (userGroups.length === 0) {
+                            this.addNewGroup("내 키워드");
+                        }
+
+                        let finalKeyword = keywordInput.trim();
+                        let finalDesc = descInput.trim();
+                        const isSimpleEnglish = /^[a-zA-Z0-9\s.,'()\-]+$/.test(finalKeyword);
+
+                        if (this.settings.aiKeywordSupport) {
+                            if (!isSimpleEnglish) {
+                                finalKeyword = await this.callTranslationAPI(finalKeyword);
+                            }
+                            if (!finalDesc) {
+                                finalDesc = await this.callDescriptionAPI(finalKeyword);
+                            }
+                        } else {
+                             finalKeyword = finalKeyword.toLowerCase().replace(/\s+/g, ' ');
+                            if (!finalDesc) {
+                                finalDesc = '_';
+                            }
+                        }
+
+                        const newKeyword = {
+                            id: 'user-' + Date.now() + Math.random(),
+                            type: 'keyword',
+                            keyword: finalKeyword,
+                            desc: finalDesc,
+                            isCustom: true
+                        };
+                        
+                        const targetGroup = this.keywordBank.userGroups[0];
+                        targetGroup.keywords.unshift(newKeyword);
+                        
+                        const targetTab = targetGroup.tabs[0] || null;
+                        if (targetTab) {
+                             targetTab.keywordIds.unshift(newKeyword.id);
+                        }
+                        this.saveState();
+                    } catch (error) {
+                        console.error("AI Support Error:", error);
+                        this.showToast("AI 지원 오류: " + error.message);
+                    } finally {
+                        this.ui.isLoadingCompletion = false;
+                    }
+                },
+
+                addNewGroup(name) {
+                    if (!name || !name.trim()) {
+                        this.showToast("그룹 이름을 입력해주세요.");
+                        return;
+                    }
+                    const newGroup = {
+                        id: 'user-' + Date.now() + Math.random(),
+                        name: name.trim(),
+                        keywords: [],
+                        collapsed: false,
+                        isDefault: false,
+                        activeTab: '기본',
+                        tabs: [{ name: '기본', keywordIds: [] }]
+                    };
+                    this.keywordBank.userGroups.push(newGroup);
+                    this.saveState();
+                    this.showToast(`'${name.trim()}' 그룹이 추가되었습니다.`);
+                },
+
+                deleteUserGroup(groupId) {
+                    const groupIndex = this.keywordBank.userGroups.findIndex(g => g.id === groupId);
+                    if (groupIndex > -1) {
+                        const [deletedGroup] = this.keywordBank.userGroups.splice(groupIndex, 1);
+                        this.saveState();
+                        this.showToast(`'${deletedGroup.name}' 그룹이 삭제되었습니다.`);
+                    }
+                },
+                
+                removeKeywordFromBank(groupId, itemId) {
+                    const allGroups = [...this.keywordBank.defaultGroups, ...this.keywordBank.userGroups];
+                    const group = allGroups.find(g => g.id === groupId);
+                    
+                    if (group) {
+                        const keywordIndex = group.keywords.findIndex(k => k.id === itemId);
+                        if (keywordIndex > -1) {
+                            const [removedKeyword] = group.keywords.splice(keywordIndex, 1);
+                            group.tabs.forEach(tab => {
+                                const idIndex = tab.keywordIds.indexOf(itemId);
+                                if (idIndex > -1) tab.keywordIds.splice(idIndex, 1);
+                            });
+                            this.removeKeywordFromAllAreas(removedKeyword.id);
+                            this.saveState();
+                            this.showToast(`'${removedKeyword.keyword}' 키워드가 삭제되었습니다.`);
+                        }
+                    }
+                },
+
+                // =================================================================
+                // CANVAS DRAG & DROP FUNCTIONS
+                // =================================================================
+                
+                handleCanvasDragStart(event, item, fromGroupKey) {
+                    this.canvas.draggingItem = { item: { ...item }, fromGroupKey: fromGroupKey };
+                    event.dataTransfer.effectAllowed = 'move';
+                },
+
+                handleCanvasDragOver(event) {
+                    event.preventDefault();
+                },
+                
+                handleCanvasDrop(event, toGroupKey) {
+                    if (!this.canvas.draggingItem) return;
+                
+                    const { item, fromGroupKey } = this.canvas.draggingItem;
+                    const fromArray = this.canvas[fromGroupKey];
+                    const fromIndex = fromArray.findIndex(k => k.instanceId === item.instanceId);
+                
+                    if (fromIndex === -1) {
+                        this.clearCanvasDragState();
+                        return;
+                    }
+                
+                    const dropTarget = event.target.closest('.prompt-keyword');
+                    const toArray = this.canvas[toGroupKey];
+                    let toIndex = toArray.length;
+
+                    if (dropTarget) {
+                        const targetId = dropTarget.dataset.instanceId;
+                        if (targetId !== item.instanceId) {
+                           const targetIndexInDOM = Array.from(dropTarget.parentElement.children).indexOf(dropTarget);
+                           const rect = dropTarget.getBoundingClientRect();
+                           const isAfter = event.clientY > rect.top + rect.height / 2;
+                           toIndex = isAfter ? targetIndexInDOM + 1 : targetIndexInDOM;
+                        } else {
+                            this.clearCanvasDragState();
+                            return;
+                        }
+                    }
+                
+                    const [movedItem] = fromArray.splice(fromIndex, 1);
+                
+                    if (fromGroupKey === toGroupKey && fromIndex < toIndex) {
+                        toIndex--;
+                    }
+                
+                    toArray.splice(toIndex, 0, movedItem);
+                
+                    this.updateActiveKeywordIds();
+                    this.clearCanvasDragState();
+                },
+
+                clearCanvasDragState() {
+                    this.canvas.draggingItem = null;
+                },
+                
+                // Attachment D&D
+                handleImageDragStart(event, image) {
+                    this.attachments.draggingItem = image;
+                    event.dataTransfer.effectAllowed = 'move';
+                },
+
+                handleImageDragOver(event, index) {
+                    event.preventDefault();
+                },
+
+                handleImageDrop(event, targetIndex) {
+                    event.preventDefault();
+                    if (!this.attachments.draggingItem) return;
+
+                    const draggedItem = this.attachments.draggingItem;
+                    const targetItem = this.attachments.images[targetIndex];
+
+                    if (!targetItem || draggedItem.id === targetItem.id) {
+                        this.clearImageDragState();
+                        return;
+                    }
+                    
+                    const fromIndex = this.attachments.images.findIndex(img => img.id === draggedItem.id);
+                    if (fromIndex === -1) return;
+
+                    const rect = event.currentTarget.getBoundingClientRect();
+                    const dropBefore = event.clientX < rect.left + rect.width / 2;
+
+                    const [itemToMove] = this.attachments.images.splice(fromIndex, 1);
+                    const newToIndex = this.attachments.images.findIndex(img => img.id === targetItem.id);
+
+                    if (dropBefore) {
+                        this.attachments.images.splice(newToIndex, 0, itemToMove);
+                    } else {
+                        this.attachments.images.splice(newToIndex + 1, 0, itemToMove);
+                    }
+                    
+                    this.clearImageDragState();
+                },
+
+                clearImageDragState() {
+                    this.attachments.draggingItem = null;
+                },
+
+                // =================================================================
+                // OTHER UI & STATE MANAGEMENT FUNCTIONS
+                // =================================================================
+                
+                clearCanvasAndAttachments() {
+                    this.canvas = { subject: [], details: [], style: [], composition: [], manualPrompt: '', activeKeywordIds: [] };
+                    this.attachments.images = [];
+                    this.ui.generatedImageUrl = null;
+                    this.ui.selectedImageId = null;
+                    this.showToast("캔버스와 첨부파일을 모두 비웠습니다.");
+                },
+
+                factoryReset() {
+                    localStorage.removeItem(this.constants.LOCAL_STORAGE_KEY);
+                    this.showToast("모든 데이터가 초기화되었습니다. 페이지를 새로고침합니다.");
+                    setTimeout(() => location.reload(), 1500);
+                },
+
+                openModal(id, data = {}) {
+                    this.ui.modalData = data;
+                    this.ui.activeModal = id;
+                },
+                
+                closeModal() {
+                    this.ui.activeModal = null;
+                    this.ui.modalData = {};
+                },
+
+                toggleInteractivePanel() {
+                    this.ui.isInteractivePanelVisible = !this.ui.isInteractivePanelVisible;
+                },
+                
+                copyToClipboard(text) {
+                    if (!text) return;
+                     const textarea = document.createElement('textarea');
+                     textarea.value = text;
+                     document.body.appendChild(textarea);
+                     textarea.select();
+                     try {
+                        document.execCommand('copy');
+                        this.showToast("클립보드에 복사되었습니다!");
+                     } catch (err) {
+                        this.showToast("복사에 실패했습니다.");
+                     }
+                     document.body.removeChild(textarea);
+                },
+                
+                saveState(showToast = true) {
+                    try {
+                        const dataToSave = {
+                            keywordBank: {
+                                defaultGroups: this.keywordBank.defaultGroups,
+                                userGroups: this.keywordBank.userGroups,
+                            },
+                            settings: this.settings,
+                            history: this.history,
+                            presets: this.presets
+                        };
+                        localStorage.setItem(this.constants.LOCAL_STORAGE_KEY, JSON.stringify(dataToSave));
+                        if(showToast && this.ui.activeModal === 'settings-modal') this.showToast("설정이 저장되었습니다.");
+                    } catch (error) {
+                        this.showToast("설정을 저장하는데 실패했습니다. 브라우저 저장 공간이 부족할 수 있습니다.");
+                    }
+                },
+                
+                loadState() {
+                    try {
+                        const savedData = localStorage.getItem(this.constants.LOCAL_STORAGE_KEY);
+                        if (!savedData) return;
+                        const parsed = JSON.parse(savedData);
+                        if (parsed) {
+                           if (parsed.keywordBank) {
+                                this.keywordBank.defaultGroups = parsed.keywordBank.defaultGroups || this.keywordBank.defaultGroups;
+                                this.keywordBank.userGroups = parsed.keywordBank.userGroups || [];
+                            }
+                            this.settings = { ...this.settings, ...parsed.settings };
+                            this.history = parsed.history || [];
+                            this.presets = parsed.presets || [];
+                            this.ui.generatedImageUrl = null;
+                            this.ui.selectedImageId = null;
+                            this.attachments.images = [];
+                            this.showToast("저장된 설정을 불러왔습니다.");
+                        }
+                    } catch (error) {
+                        console.error("Load state error:", error);
+                    }
+                },
+                
+                // =================================================================
+                // PRESET & HISTORY REFACTORED FUNCTIONS
+                // =================================================================
+                saveCurrentCanvasAsPreset() {
+                    const promptText = this.getFinalPrompt();
+                    if (!promptText) {
+                        this.showToast("저장할 내용이 없습니다.");
+                        return;
+                    }
+                    const now = new Date();
+                    const name = `Preset ${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+                    
+                    const preset = {
+                        id: Date.now(),
+                        name: name,
+                        promptText: promptText,
+                        promptLength: promptText.length,
+                        canvasState: JSON.parse(JSON.stringify(this.canvas))
+                    };
+                    
+                    if (this.settings.generationModel === 'imagen' && this.settings.seed) {
+                        preset.seed = this.settings.seed;
+                    }
+
+                    this.presets.unshift(preset);
+                    this.saveState();
+                    this.showToast(`'${name}' 프리셋이 저장되었습니다.`);
+                },
+                
+                savePresetFromHistory(historyId) {
+                    const item = this.history.find(h => h.id === historyId);
+                    if (!item) return;
+
+                    const now = new Date();
+                    const name = `Preset ${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+                    const preset = {
+                        id: Date.now(),
+                        name: name,
+                        promptText: item.promptText,
+                        promptLength: item.promptLength,
+                        canvasState: JSON.parse(JSON.stringify(item.canvasState))
+                    };
+
+                    if (item.metadata && item.metadata.seed) {
+                        preset.seed = item.metadata.seed;
+                    }
+                    
+                    this.presets.unshift(preset);
+                    this.saveState();
+                    this.showToast(`히스토리를 프리셋으로 저장했습니다: '${name}'`);
+                },
+
+                loadPreset(id) {
+                    const preset = this.presets.find(p => p.id === id);
+                    if (preset) {
+                        this.canvas = { ...{activeKeywordIds: []}, ...JSON.parse(JSON.stringify(preset.canvasState)) };
+                        this.attachments.images = [];
+                        this.ui.generatedImageUrl = null;
+                        this.ui.selectedImageId = null;
+                        this.settings.seed = preset.seed || '';
+                        this.showToast(`'${preset.name}' 프리셋을 불러왔습니다.`);
+                        this.closeModal();
+                    }
+                },
+                
+                deletePreset(id) {
+                    this.presets = this.presets.filter(p => p.id !== id);
+                    this.saveState();
+                    this.showToast("프리셋을 삭제했습니다.");
+                },
+
+                updatePresetName(id, newName) {
+                    const preset = this.presets.find(p => p.id === id);
+                    if(preset && newName.trim()){
+                        preset.name = newName.trim();
+                        this.saveState(false);
+                    }
+                    this.ui.editingPresetId = null;
+                },
+
+                deleteHistory(id) {
+                    this.history = this.history.filter(i => i.id !== id);
+                    this.saveState();
+                    this.showToast("히스토리 항목을 삭제했습니다.");
+                },
+
+                // =================================================================
+                // INTERACTIVE & HISTORY FUNCTIONS
+                // =================================================================
+                handleInteractiveClick(controlKey) {
+                    if (['inpainting', 'outpainting'].includes(controlKey)) {
+                        if (!this.ui.generatedImageUrl) { this.showToast("기준 이미지가 없습니다."); return; }
+                        this.ui.isInteractivePanelVisible = false;
+                        this.openModal('fabric-modal', { mode: controlKey });
+                        return;
+                    }
+                    this.ui.selectedEffects = [controlKey];
+                    this.applySelectedEffects();
+                },
+
+                getEffectPrompt() {
+                    return this.ui.selectedEffects.map(key => this.constants.INTERACTIVE_PROMPTS[key]).join(', ');
+                },
+                
+                async applySelectedEffects() {
+                    if (!this.ui.generatedImageUrl) {
+                        this.showToast("기준 이미지가 없습니다.");
+                        return;
+                    }
+                    if (this.ui.selectedEffects.length === 0) {
+                        this.showToast("적용할 효과를 하나 이상 선택해주세요.");
+                        return;
+                    }
+
+                    const controlKey = this.ui.selectedEffects[0]; 
+
+                    // --- ID PHOTO SPECIAL LOGIC ---
+                    if (controlKey === 'id-photo') {
+                        this.ui.isInteractivePanelVisible = false;
+                        this.ui.isLoadingImage = true;
+                        try {
+                            const whiteCanvasUrl = this.createBlankCanvas(903, 1161);
+                            const whiteCanvasImage = { dataUrl: whiteCanvasUrl, name: 'id_photo_canvas.png' };
+                            const userImage = this.attachments.images.find(img => img.id === this.ui.selectedImageId);
+                            if (!userImage) throw new Error("Could not find the selected user image.");
+
+                            const idPhotoPrompt = this.constants.INTERACTIVE_PROMPTS['id-photo'];
+                            
+                            const result = await this.callImageAPI(idPhotoPrompt, [whiteCanvasImage, userImage]);
+                            const imageData = result.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+                            if (imageData) {
+                                const newImageUrl = `data:image/png;base64,${imageData}`;
+                                this.ui.generatedImageUrl = newImageUrl;
+                                this.addAttachment(newImageUrl, `id_photo_${Date.now()}.png`);
+                                this.addHistory('success', null, 'gemini', '[증명사진 변환]');
+                            } else {
+                                const reason = this.getFailureReason(result);
+                                this.addHistory('failure', reason, 'gemini', '[증명사진 변환]');
+                                this.showToast(`AI 안전 정책에 따라 요청이 거부되었습니다. (${reason})`);
+                            }
+                        } catch (error) {
+                            console.error("ID Photo Generation Error:", error);
+                            this.addHistory('failure', 'technical', 'gemini', '[증명사진 변환]');
+                            this.showToast(`증명사진 변환 실패: ${error.message}`);
+                        } finally {
+                            this.ui.isLoadingImage = false;
+                            this.ui.selectedEffects = [];
+                        }
+                        return; 
+                    }
+                    // --- END OF SPECIAL LOGIC ---
+
+                    const interactivePrompt = this.getEffectPrompt();
+                    const imagesToSend = this.attachments.images.filter(img => img.id === this.ui.selectedImageId);
+                    
+                    this.ui.isInteractivePanelVisible = false;
+                    this.ui.isLoadingImage = true;
+                    try {
+                        const result = await this.callImageAPI(interactivePrompt, imagesToSend);
+                        const imageData = result.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+                        if (imageData) {
+                            const newImageUrl = `data:image/png;base64,${imageData}`;
+                            this.ui.generatedImageUrl = newImageUrl;
+                            this.addAttachment(newImageUrl);
+                            this.addHistory('success', null, 'gemini', interactivePrompt);
+                        } else {
+                            const reason = this.getFailureReason(result);
+                            this.addHistory('failure', reason, 'gemini', interactivePrompt);
+                            this.showToast(`AI 안전 정책에 따라 요청이 거부되었습니다. (${reason})`);
+                        }
+                    } catch (error) {
+                        console.error("Interactive Image Generation Error:", error);
+                        this.addHistory('failure', 'technical', 'gemini', interactivePrompt);
+                        this.showToast(`인터랙티브 수정 실패: ${error.message}`);
+                    } finally {
+                        this.ui.isLoadingImage = false;
+                        this.ui.selectedEffects = [];
+                    }
+                },
+                
+                restoreHistory(id) {
+                    const item = this.history.find(h => h.id === id);
+                    if (item) {
+                         this.canvas = { ...this.canvas, ...item.canvasState };
+                         if (item.image) {
+                            // Find if image still exists in attachments, otherwise add it.
+                            const existingImage = this.attachments.images.find(img => img.dataUrl === item.image);
+                            if(existingImage){
+                                this.selectImage(existingImage);
+                            } else {
+                                this.addAttachment(item.image, item.metadata?.refFilename || `history_${item.id}.png`);
+                            }
+                         } else {
+                            this.attachments.images = [];
+                            this.ui.generatedImageUrl = null;
+                            this.ui.selectedImageId = null;
+                         }
+                         if(item.metadata && item.metadata.seed) {
+                            this.settings.seed = item.metadata.seed;
+                         }
+                        this.ui.isCanvasCollapsed = false;
+                        this.showToast("히스토리를 복원했습니다.");
+                        this.closeModal();
+                    }
+                },
+                
+                addHistory(status, reason, model, prompt = null, metadata = {}) {
+                    this.history.unshift({
+                        id: Date.now(),
+                        status,
+                        reason,
+                        modelUsed: model,
+                        promptText: prompt || this.getFinalPrompt(),
+                        promptLength: (prompt || this.getFinalPrompt()).length,
+                        image: this.ui.generatedImageUrl,
+                        canvasState: JSON.parse(JSON.stringify(this.canvas)),
+                        metadata: metadata,
+                    });
+                },
+                async updateImageInfo(image) {
+                    if (!image) {
+                        this.ui.currentImageInfo = { name: '', resolution: '', size: '' };
+                        return;
+                    }
+
+                    const sizeInKB = (image.dataUrl.length * (3/4)) / 1024;
+                    this.ui.currentImageInfo = {
+                        name: image.name,
+                        resolution: '계산 중...',
+                        size: sizeInKB > 1024 ? `${(sizeInKB/1024).toFixed(1)} MB` : `${sizeInKB.toFixed(0)} KB`
+                    };
+
+                    const img = new Image();
+                    img.onload = () => {
+                        this.ui.currentImageInfo.resolution = `${img.width}x${img.height}`;
+                    };
+                    img.src = image.dataUrl;
+                },
+            });
+            
+            Alpine.data('fabricModal', () => ({
+                // Common State
+                mode: null, // 'draw', 'inpainting', 'outpainting'
+                canvas: null,
+                history: [],
+                historyIndex: -1,
+                isLoading: false,
+
+                // Mode-specific State
+                brushSize: 20,
+                brushColor: '#000000',
+                baseImage: null,
+                inpaintingPrompt: '',
+                maskMode: 'transform',
+                fabricImage: null,
+                originalImage: null,
+                padding: { top: 0, right: 0, bottom: 0, left: 0 },
+                originalWidth: 0,
+                originalHeight: 0,
+                expansionBudgetPercent: 100,
+                scaledResolution: '0x0',
+                cornerBudgetConsumption: 0,
+                
+                // --- Computed Properties ---
+                get title() {
+                    return {
+                        draw: '🎨 그림판',
+                        inpainting: '🖌️ 부분 수정',
+                        outpainting: '🖼️ 캔버스 확장'
+                    }[this.mode] || '';
+                },
+                get runButtonText() {
+                    return {
+                        draw: '첨부하기',
+                        inpainting: '실행',
+                        outpainting: '실행'
+                    }[this.mode] || '실행';
+                },
+
+                // --- Initialization ---
+                init() {
+                    this.$watch('$store.app.ui.activeModal', (newValue) => {
+                        if (newValue === 'fabric-modal') {
+                           this.$nextTick(() => this.initialize());
+                        } else {
+                            if (this.canvas) this.canvas.dispose();
+                            this.canvas = null;
+                        }
+                    });
+                },
+                initialize() {
+                    this.mode = Alpine.store('app').ui.modalData.mode;
+                    if (this.canvas) this.canvas.dispose();
+                    this.canvas = new fabric.Canvas(this.$refs.canvas, { selection: false });
+                    
+                    this.history = [];
+                    this.historyIndex = -1;
+
+                    if (this.mode === 'draw') this.initDraw();
+                    else if (this.mode === 'inpainting') this.initInpainting();
+                    else if (this.mode === 'outpainting') this.initOutpainting();
+                },
+
+                // --- Mode-specific Initializers ---
+                initDraw() {
+                    this.canvas.isDrawingMode = true;
+                    this.updateBrush();
+                    this.canvas.on('mouse:up', () => this.saveCanvasHistory());
+                    const wrapper = this.$refs.canvasWrapper;
+                    if (wrapper) this.canvas.setDimensions({ width: wrapper.clientWidth, height: wrapper.clientHeight });
+                },
+                initInpainting() {
+                    this.canvas.isDrawingMode = true;
+                    this.canvas.backgroundColor = 'black';
+                    this.updateBrush();
+                    this.loadImageOntoCanvas();
+                    this.canvas.on('mouse:up', () => this.saveCanvasHistory());
+                },
+                initOutpainting() {
+                    this.canvas.isDrawingMode = false;
+                    this.loadImageAsObject();
+                },
+                
+                // --- Common Actions ---
+                run() {
+                    if (this.mode === 'draw') this.attachDrawing();
+                    else if (this.mode === 'inpainting') this.runInpainting();
+                    else if (this.mode === 'outpainting') this.runOutpainting();
+                },
+                reset() {
+                    if (this.mode === 'outpainting') this.resetPadding();
+                    else if (this.mode === 'inpainting') this.clearInpaintingMask();
+                    else if (this.mode === 'draw') this.clearDrawCanvas();
+                },
+
+                // --- History Management ---
+                saveCanvasHistory() {
+                    const json = JSON.stringify(this.canvas);
+                    this.history = this.history.slice(0, this.historyIndex + 1);
+                    this.history.push(json);
+                    this.historyIndex = this.history.length - 1;
+                },
+                 savePaddingHistory() {
+                    const state = JSON.stringify(this.padding);
+                    if (this.history.length > 0 && this.history[this.historyIndex] === state) return;
+                    this.history = this.history.slice(0, this.historyIndex + 1);
+                    this.history.push(state);
+                    this.historyIndex = this.history.length - 1;
+                },
+                undo() {
+                    if (this.mode === 'draw' && this.historyIndex <= 0) { this.clearDrawCanvas(); return; }
+                    if (this.mode === 'inpainting' && this.historyIndex <= 0) { this.clearInpaintingMask(); return; }
+
+                    if (this.mode === 'outpainting') {
+                        if (this.historyIndex > 0) {
+                            this.historyIndex--;
+                            const restoredPadding = JSON.parse(this.history[this.historyIndex]);
+                            const isInitialState = Object.values(restoredPadding).every(v => v === 0);
+                
+                            if (isInitialState) {
+                                this.resetPadding(); // This also resets history
+                            } else {
+                                this.padding = restoredPadding;
+                                this.updateExpansionState(null, false); // Update UI without saving new history
+                            }
+                        } else {
+                            this.resetPadding();
+                        }
+                        return;
+                    }
+                    
+                    if (this.historyIndex > 0) {
+                        this.historyIndex--;
+                        this.canvas.loadFromJSON(this.history[this.historyIndex], this.canvas.renderAll.bind(this.canvas));
+                    }
+                },
+
+                // --- Draw Mode Specific ---
+                updateBrush() {
+                    if (!this.canvas) return;
+                    if (this.mode === 'draw') {
+                        this.canvas.freeDrawingBrush.color = this.brushColor;
+                        this.canvas.freeDrawingBrush.width = parseInt(this.brushSize, 10) || 1;
+                    } else if (this.mode === 'inpainting') {
+                        this.canvas.freeDrawingBrush.color = 'rgba(255, 0, 255, 0.5)';
+                        this.canvas.freeDrawingBrush.width = parseInt(this.brushSize, 10) || 1;
+                    }
+                },
+                clearDrawCanvas() {
+                    this.canvas.clear();
+                    this.history = []; this.historyIndex = -1;
+                },
+                attachDrawing() {
+                    if (this.canvas.getObjects().length === 0) {
+                        Alpine.store('app').showToast("먼저 그림을 그려주세요."); return;
+                    }
+                    const dataUrl = this.canvas.toDataURL({ format: 'png', quality: 1.0 });
+                    Alpine.store('app').addAttachment(dataUrl, 'drawing.png');
+                    Alpine.store('app').showToast("그림을 첨부파일에 추가했습니다.");
+                    Alpine.store('app').closeModal();
+                },
+                
+                // --- Inpainting Mode Specific ---
+                loadImageOntoCanvas() {
+                    this.canvas.clear(); 
+                    this.baseImage = Alpine.store('app').ui.generatedImageUrl;
+                    if (this.baseImage) {
+                        fabric.Image.fromURL(this.baseImage, (img) => {
+                            const wrapper = this.$refs.canvasWrapper;
+                            const { clientWidth: maxWidth, clientHeight: maxHeight } = wrapper;
+                            const scale = Math.min(maxWidth / img.width, maxHeight / img.height);
+                            
+                            this.canvas.setDimensions({ width: img.width * scale, height: img.height * scale });
+                            img.set({ scaleX: scale, scaleY: scale, selectable: false, evented: false });
+                            this.canvas.add(img).sendToBack(img).renderAll();
+                            this.saveCanvasHistory(); // Save initial state
+                        });
+                    }
+                },
+                clearInpaintingMask() {
+                    const objects = this.canvas.getObjects();
+                    for (let i = objects.length - 1; i >= 0; i--) {
+                        if (objects[i].type !== 'image') this.canvas.remove(objects[i]);
+                    }
+                    this.history = this.history.slice(0, 1);
+                    this.historyIndex = 0;
+                },
+                async runInpainting() {
+                    if (!this.inpaintingPrompt) { Alpine.store('app').showToast("수정할 내용을 입력해주세요."); return; }
+                    if (!this.baseImage) return;
+                    const nonImageObjects = this.canvas.getObjects().filter(obj => obj.type !== 'image');
+                    if (nonImageObjects.length === 0) { Alpine.store('app').showToast("수정할 영역을 그려주세요."); return; }
+                    
+                    this.isLoading = true;
+                    try {
+                        const maskCanvas = new fabric.StaticCanvas(null, { width: this.canvas.width, height: this.canvas.height });
+                        const clonedObjects = await Promise.all(nonImageObjects.map(obj => new Promise(resolve => obj.clone(resolve))));
+
+                        if (this.maskMode === 'transform') {
+                            maskCanvas.backgroundColor = 'black';
+                            clonedObjects.forEach(clone => maskCanvas.add(clone.set({ stroke: 'white', fill: 'white' })));
+                        } else {
+                            maskCanvas.backgroundColor = 'white';
+                            clonedObjects.forEach(clone => maskCanvas.add(clone.set({ stroke: 'black', fill: 'black' })));
+                        }
+                        maskCanvas.renderAll();
+                        const maskDataUrl = maskCanvas.toDataURL({ format: 'png' });
+                        const singleImageToSend = { dataUrl: this.baseImage };
+
+                        const result = await Alpine.store('app').callImageAPI(this.inpaintingPrompt, [singleImageToSend], maskDataUrl);
+                        const imageData = result.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+                        if (imageData) {
+                            const newImageUrl = `data:image/png;base64,${imageData}`;
+                            Alpine.store('app').ui.generatedImageUrl = newImageUrl;
+                            Alpine.store('app').addAttachment(newImageUrl, `inpainted_${Date.now()}.png`);
+                            Alpine.store('app').addHistory('success', null, 'gemini', `[Inpainting] ${this.inpaintingPrompt}`);
+                            Alpine.store('app').closeModal();
+                        } else {
+                            const reason = Alpine.store('app').getFailureReason(result);
+                            Alpine.store('app').showToast(`AI 안전 정책에 따라 요청이 거부되었습니다. (${reason})`);
+                        }
+                    } catch (error) {
+                        Alpine.store('app').showToast(`수정 실패: ${error.message}`);
+                    } finally {
+                        this.isLoading = false;
+                        this.inpaintingPrompt = '';
+                    }
+                },
+                
+                // --- Outpainting Mode Specific ---
+                loadImageAsObject() {
+                    const imageUrl = Alpine.store('app').ui.generatedImageUrl;
+                    if (!imageUrl) return;
+                    const image = new Image();
+                    image.crossOrigin = 'anonymous';
+                    image.onload = () => {
+                        this.originalImage = image;
+                        this.originalWidth = image.width;
+                        this.originalHeight = image.height;
+                        this.fabricImage = new fabric.Image(this.originalImage, { selectable: false, evented: false });
+                        this.canvas.add(this.fabricImage);
+                        this.resetPadding(); // This will initialize padding and history
+                    };
+                    image.src = imageUrl;
+                },
+                drawPreview() {
+                    if (!this.fabricImage) return;
+                    const container = this.$refs.canvasWrapper;
+                    const containerSize = Math.min(container.clientWidth, container.clientHeight) * 0.9;
+                    const totalWidth = this.originalWidth * (1 + (this.padding.left + this.padding.right) / 100);
+                    const totalHeight = this.originalHeight * (1 + (this.padding.top + this.padding.bottom) / 100);
+                    
+                    const paddedAspectRatio = totalWidth / totalHeight;
+
+                    let canvasWidth, canvasHeight;
+                    if (paddedAspectRatio > 1) {
+                        canvasWidth = containerSize;
+                        canvasHeight = containerSize / paddedAspectRatio;
+                    } else {
+                        canvasHeight = containerSize;
+                        canvasWidth = containerSize * paddedAspectRatio;
+                    }
+                    
+                    this.canvas.setDimensions({ width: canvasWidth, height: canvasHeight });
+                    this.canvas.clear();
+                    this.canvas.backgroundColor = 'rgba(128, 128, 128, 0.4)';
+
+                    const imageScale = canvasWidth / totalWidth;
+
+                    this.fabricImage.set({
+                        scaleX: imageScale, scaleY: imageScale,
+                        left: (this.padding.left / 100) * this.originalWidth * imageScale,
+                        top: (this.padding.top / 100) * this.originalHeight * imageScale
+                    });
+                    
+                    this.canvas.add(this.fabricImage).renderAll();
+                },
+                updateExpansionState(activeSide = null, saveHistory = true) {
+                    if (!this.originalWidth) return;
+
+                    const originalArea = this.originalWidth * this.originalHeight;
+                    const maxTotalArea = originalArea * 2.0;
+                    const maxSliderValue = 100;
+                
+                    const maxPaddings = {};
+
+                    ['top', 'right', 'bottom', 'left'].forEach(side => {
+                        const otherHorizontal = side === 'left' ? this.padding.right : this.padding.left;
+                        const otherVertical = side === 'top' ? this.padding.bottom : this.padding.top;
+                
+                        let maxBudget = maxSliderValue;
+                        if (['left', 'right'].includes(side)) {
+                            const currentTotalHeight = this.originalHeight * (1 + (this.padding.top + this.padding.bottom) / 100);
+                            if (currentTotalHeight > 0) {
+                                const maxTotalWidth = maxTotalArea / currentTotalHeight;
+                                const totalHorizontalPaddingPercent = ((maxTotalWidth / this.originalWidth) - 1) * 100;
+                                maxBudget = totalHorizontalPaddingPercent - otherHorizontal;
+                            } else { maxBudget = 0; }
+                        } else {
+                            const currentTotalWidth = this.originalWidth * (1 + (this.padding.left + this.padding.right) / 100);
+                            if (currentTotalWidth > 0) {
+                                const maxTotalHeight = maxTotalArea / currentTotalWidth;
+                                const totalVerticalPaddingPercent = ((maxTotalHeight / this.originalHeight) - 1) * 100;
+                                maxBudget = totalVerticalPaddingPercent - otherVertical;
+                            } else { maxBudget = 0; }
+                        }
+                        
+                        maxPaddings[side] = Math.max(0, Math.min(maxSliderValue, maxBudget));
+                    });
+                
+                    if (activeSide && this.padding[activeSide] > maxPaddings[activeSide]) {
+                        this.padding[activeSide] = maxPaddings[activeSide];
+                    }
+
+                    const linearWidthExpansion = this.originalWidth * (this.padding.left + this.padding.right) / 100;
+                    const linearHeightExpansion = this.originalHeight * (this.padding.top + this.padding.bottom) / 100;
+                    const linearExpandedArea = linearWidthExpansion * this.originalHeight + linearHeightExpansion * this.originalWidth;
+                    
+                    const currentWidth = this.originalWidth * (1 + (this.padding.left + this.padding.right) / 100);
+                    const currentHeight = this.originalHeight * (1 + (this.padding.top + this.padding.bottom) / 100);
+                    const currentTotalArea = currentWidth * currentHeight;
+                    const actualExpandedArea = currentTotalArea - originalArea;
+                    
+                    const cornerArea = actualExpandedArea - linearExpandedArea;
+                    this.cornerBudgetConsumption = (cornerArea / (maxTotalArea - originalArea)) * 100;
+
+                    const budgetUsedPercent = (actualExpandedArea / (maxTotalArea - originalArea)) * 100;
+                    this.expansionBudgetPercent = Math.max(0, 100 - budgetUsedPercent);
+                
+                    if (currentWidth > 0 && currentHeight > 0) {
+                        const aspectRatio = currentWidth / currentHeight;
+                        const totalPixels = 1024 * 1024;
+                        const scaledHeight = Math.round(Math.sqrt(totalPixels / aspectRatio));
+                        const scaledWidth = Math.round(aspectRatio * scaledHeight);
+                        this.scaledResolution = `${scaledWidth}x${scaledHeight}`;
+                    }
+                
+                    this.drawPreview();
+                    if(saveHistory) this.savePaddingHistory();
+                },
+                resetPadding() {
+                    this.padding = { top: 0, right: 0, bottom: 0, left: 0 };
+                    this.history = [];
+                    this.historyIndex = -1;
+                    this.updateExpansionState(null, false);
+                    this.savePaddingHistory();
+                },
+                async runOutpainting() {
+                    if (!this.originalImage) { Alpine.store('app').showToast("원본 이미지가 없습니다."); return; }
+                    if (this.padding.top === 0 && this.padding.right === 0 && this.padding.bottom === 0 && this.padding.left === 0) {
+                        Alpine.store('app').showToast("확장할 영역을 설정해주세요."); return;
+                    }
+                    this.isLoading = true;
+                    try {
+                        const originalImageDataUrl = Alpine.store('app').ui.generatedImageUrl;
+                        if (!originalImageDataUrl) throw new Error("Original image data URL is not available.");
+
+                        const finalWidth = Math.round(this.originalWidth * (1 + (this.padding.left + this.padding.right) / 100));
+                        const finalHeight = Math.round(this.originalHeight * (1 + (this.padding.top + this.padding.bottom) / 100));
+
+                        const maskCanvas = document.createElement('canvas');
+                        maskCanvas.width = finalWidth;
+                        maskCanvas.height = finalHeight;
+                        const maskCtx = maskCanvas.getContext('2d');
+                        maskCtx.fillStyle = 'black';
+                        maskCtx.fillRect(0, 0, finalWidth, finalHeight);
+                        maskCtx.fillStyle = 'white';
+                        maskCtx.fillRect(
+                            Math.round(this.originalWidth * (this.padding.left / 100)),
+                            Math.round(this.originalHeight * (this.padding.top / 100)),
+                            this.originalWidth,
+                            this.originalHeight
+                        );
+                        const maskDataUrl = maskCanvas.toDataURL('image/png');
+                        
+                        const singleImageToSend = { dataUrl: originalImageDataUrl };
+                        const outpaintingPrompt = "Perform an outpainting task based on the provided mask. The white area defines the content to preserve. The black area defines the empty space to be filled by seamlessly extending the original image.";
+
+                        const result = await Alpine.store('app').callImageAPI(outpaintingPrompt, [singleImageToSend], maskDataUrl);
+                        const imageData = result.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+
+                        if (imageData) {
+                            const newImageUrl = `data:image/png;base64,${imageData}`;
+                            Alpine.store('app').ui.generatedImageUrl = newImageUrl;
+                            Alpine.store('app').addAttachment(newImageUrl, `outpainted_${Date.now()}.png`);
+                            Alpine.store('app').addHistory('success', null, 'gemini', '[Outpainting]');
+                            Alpine.store('app').closeModal();
+                        } else {
+                            const reason = Alpine.store('app').getFailureReason(result);
+                            Alpine.store('app').showToast(`AI 안전 정책에 따라 요청이 거부되었습니다. (${reason})`);
+                        }
+                    } catch (error) {
+                        console.error("Outpainting Error:", error);
+                        Alpine.store('app').showToast(`캔버스 확장 실패: ${error.message}`);
+                    } finally {
+                        this.isLoading = false;
+                    }
+                }
+            }));
+
+            Alpine.store('app').loadState();
+        });
+    </script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap');
+        
+        body { font-family: 'Inter', 'Noto Sans KR', sans-serif; }
+        .material-symbols-outlined { vertical-align: middle; font-variation-settings: 'FILL' 0, 'wght' 200, 'GRAD' 0, 'opsz' 24; }
+        .toast { min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 10000; left: 50%; bottom: 50px; transform: translateX(-50%); transition: all 0.5s; }
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .bank-item .item-controls { opacity: 0; }
+        .bank-item:hover .item-controls { opacity: 1; }
+
+        .bank-item { transition: all 0.2s ease-in-out; }
+        .bank-item.selected-in-canvas {
+            background-color: #dbeafe !important; /* blue-200 */
+        }
+        .bank-item:not(.selected-in-canvas):hover { background-color: #f0f9ff; }
+        
+        .keyword-tab { transition: all 0.2s ease-in-out; }
+        .keyword-tab.active { border-color: #3b82f6; background-color: #3b82f6; color: white; }
+        
+        .prompt-canvas-area { transition: all 0.2s ease-in-out; border: 2px dashed transparent; }
+        
+        .prompt-keyword:hover .remove-keyword-btn { opacity: 1; }
+        .remove-keyword-btn { opacity: 0; transition: opacity 0.2s; }
+        .toggle-icon { transition: transform 0.2s ease-in-out; }
+        .group-container.collapsed .toggle-icon { transform: rotate(-90deg); }
+        .group-content { transition: max-height 0.3s ease-out, padding 0.3s ease-out, opacity 0.3s; max-height: 1000px; overflow: hidden; opacity: 1;}
+        .group-container.collapsed .group-content { max-height: 0; padding-top: 0; padding-bottom: 0; opacity: 0;}
+        
+        #prompt-canvas-container.collapsed .toggle-icon { transform: rotate(-90deg); }
+        #prompt-canvas { transition: max-height 0.3s ease-out, padding-top 0.3s ease-out, padding-bottom 0.3s ease-out, margin-top 0.3s ease-out; max-height: 1000px; overflow-y: hidden; }
+        #prompt-canvas-container.collapsed #prompt-canvas { max-height: 0; padding-top: 0; padding-bottom: 0; margin-top: 0 !important; }
+        #image-result-container .loader { width: 50px; height: 50px; border-radius: 50%; display: inline-block; border-top: 5px solid #3498db; border-right: 5px solid transparent; box-sizing: border-box; animation: spin 1s linear infinite; }
+        .thumbnail-item .remove-img-btn { opacity: 0; transition: opacity 0.2s; }
+        .thumbnail-item:hover .remove-img-btn { opacity: 1; }
+        .modal-backdrop { transition: opacity 0.3s ease-in-out; }
+        .interactive-panel { transform: translateY(10px); transition: transform 0.3s ease-out, opacity 0.3s ease-out; }
+        
+        .toggle-switch { position: relative; display: inline-block; width: 50px; height: 28px; }
+        .toggle-switch input { opacity: 0; width: 0; height: 0; }
+        .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px; }
+        .toggle-slider:before { position: absolute; content: ""; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .toggle-slider { background-color: #2196F3; }
+        input:checked + .toggle-slider:before { transform: translateX(22px); }
+        #fabric-modal { z-index: 60; }
+        #manual-prompt-textarea { min-height: 80px; resize: vertical; overflow-y: auto; }
+        .interactive-btn { background-color: transparent; border-radius: 9999px; padding: 0.25rem; transition: all 0.2s ease-in-out; margin: 1px; }
+        .interactive-btn:hover { background-color: rgba(255, 255, 255, 0.2); transform: scale(1.1); }
+        .interactive-btn.selected { background-color: rgba(46, 213, 115, 0.3); outline: 2px solid #2ed573; }
+        .group-header .group-controls { opacity: 0; transition: opacity 0.2s ease-in-out; }
+        .group-header:hover .group-controls { opacity: 1; }
+
+    </style>
+</head>
+<body class="bg-slate-100 text-slate-800"
+    x-init="
+        $watch('$store.app.keywordBank.searchTerm', (newValue, oldValue) => {
+            const store = $store.app;
+            const allGroups = [...store.keywordBank.defaultGroups, ...store.keywordBank.userGroups];
+            
+            if (newValue && !oldValue) { // Search starts
+                store.keywordBank.preSearchCollapsedState = allGroups.reduce((acc, group) => {
+                    acc[group.id] = group.collapsed;
+                    return acc;
+                }, {});
+                 store.keywordBank.preSearchActiveTabState = allGroups.reduce((acc, group) => {
+                    acc[group.id] = group.activeTab;
+                    return acc;
+                }, {});
+            }
+
+            if (newValue) { // While searching: Centralized logic to avoid race conditions
+                const termLower = newValue.toLowerCase();
+                allGroups.forEach(group => {
+                    let isGroupVisible = false;
+                    let matchingTabName = null;
+
+                    const groupName = group.isDefault ? { subject: '주제', details: '세부 묘사', style: '표현 기법', composition: '구도' }[group.id] : group.name;
+                    if (groupName && groupName.toLowerCase().includes(termLower)) {
+                        isGroupVisible = true;
+                    }
+                    
+                    for (const tab of group.tabs) {
+                        let tabContainsResult = false;
+                        if (tab.name.toLowerCase().includes(termLower)) {
+                            tabContainsResult = true;
+                        } else {
+                            tabContainsResult = tab.keywordIds.some(id => {
+                                const keyword = group.keywords.find(k => k.id === id);
+                                return keyword && (
+                                    keyword.keyword.toLowerCase().includes(termLower) || 
+                                    (keyword.desc && keyword.desc.toLowerCase().includes(termLower))
+                                );
+                            });
+                        }
+                        if (tabContainsResult) {
+                            isGroupVisible = true;
+                            if (!matchingTabName) { // Set only the first matching tab
+                                matchingTabName = tab.name;
+                            }
+                        }
+                    }
+
+                    if (isGroupVisible) {
+                        group.collapsed = false;
+                        if (matchingTabName) {
+                            group.activeTab = matchingTabName;
+                        }
+                    }
+                });
+            } else if (!newValue && oldValue) { // Search ends
+                allGroups.forEach(group => {
+                    if (store.keywordBank.preSearchCollapsedState && store.keywordBank.preSearchCollapsedState.hasOwnProperty(group.id)) {
+                        group.collapsed = store.keywordBank.preSearchCollapsedState[group.id];
+                    }
+                    if (store.keywordBank.preSearchActiveTabState && store.keywordBank.preSearchActiveTabState.hasOwnProperty(group.id)) {
+                        group.activeTab = store.keywordBank.preSearchActiveTabState[group.id];
+                    }
+                });
+                store.keywordBank.preSearchCollapsedState = null;
+                store.keywordBank.preSearchActiveTabState = null;
+            }
+        });
+        $watch('$store.app.ui.selectedImageId', (newId) => {
+            const store = $store.app;
+            if (newId) {
+                const selectedImage = store.attachments.images.find(img => img.id === newId);
+                if (selectedImage) {
+                    store.updateImageInfo(selectedImage);
+                }
+            } else {
+                store.ui.currentImageInfo = { name: '', resolution: '', size: '' };
+            }
+        });
+    ">
+
+    <div class="container mx-auto p-6 max-w-7xl">
+        <header class="flex justify-between items-center mb-8">
+            <div class="w-10"></div>
+            <div class="text-center">
+                <h1 class="text-5xl font-bold text-slate-900">AI 프롬프트 스튜디오</h1>
+            </div>
+            <button id="settings-btn" class="text-slate-500 hover:text-blue-600 transition-colors w-10 h-10 flex items-center justify-center" title="설정" @click="$store.app.openModal('settings-modal')">
+                <span class="material-symbols-outlined text-3xl">settings</span>
+            </button>
+        </header>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+            <div 
+                class="lg:col-span-1 bg-white px-4 py-6 rounded-2xl shadow-lg flex flex-col"
+                >
+                <div class="flex justify-between items-center mb-4 border-b pb-2 border-slate-200">
+                    <h2 class="text-2xl font-bold">🗂️ 키워드 뱅크</h2>
+                </div>
+                <div class="relative mb-4">
+                    <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                    <input type="text" id="keyword-search-input" placeholder="키워드 검색..." class="w-full p-2 pl-10 border rounded-md border-slate-300 bg-white" x-model="$store.app.keywordBank.searchTerm">
+                </div>
+
+                <div id="keyword-list-container" class="space-y-3 flex-grow overflow-y-auto pr-2">
+                    <template x-for="group in [...$store.app.keywordBank.defaultGroups, ...$store.app.keywordBank.userGroups]" :key="group.id">
+                        <div x-data="keywordGroup(group)"
+                             @click.outside="$store.app.keywordBank.tabDeleteState.groupId === group.id ? $store.app.keywordBank.tabDeleteState.active = false : null"
+                             x-show="hasSearchResults"
+                             class="group-container bg-slate-50 px-2 py-3 rounded"
+                             :class="{'collapsed': !$store.app.keywordBank.searchTerm && group.collapsed}"
+                             :data-group-id="group.id" 
+                            >
+                            <div class="group-header flex justify-between items-center cursor-pointer group" @click="!$store.app.keywordBank.searchTerm && (group.collapsed = !group.collapsed)">
+                                <div class="flex items-center">
+                                    <span class="material-symbols-outlined toggle-icon text-slate-500 mr-2">expand_more</span>
+                                    <span class="font-bold text-slate-800 text-lg" x-text="group.isDefault ? { subject: '주제', details: '세부 묘사', style: '표현 기법', composition: '구도' }[group.id] : group.name"></span>
+                                    <span class="keyword-count ml-2 text-xs text-slate-500" x-text="`(${filteredCount})`"></span>
+                                </div>
+                                <div class="group-controls">
+                                    <button x-show="!group.isDefault" @click.stop="$store.app.deleteUserGroup(group.id)" class="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100" title="그룹 삭제">
+                                        <span class="material-symbols-outlined text-base">delete</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div x-show="!(!$store.app.keywordBank.searchTerm && group.collapsed)" class="group-content pt-3">
+                                <div class="group flex items-center gap-1 flex-wrap mb-3 border-t pt-3 border-slate-200">
+                                    <template x-for="tab in group.tabs" :key="tab.name">
+                                        <div class="relative">
+                                            <button @click.stop="group.activeTab = tab.name" 
+                                                    class="keyword-tab text-xs font-semibold py-1 px-3 rounded-full border"
+                                                    :class="{ 'active': group.activeTab === tab.name, 'bg-white': group.activeTab !== tab.name }">
+                                                <span x-text="tab.name"></span>
+                                            </button>
+                                            <button x-show="$store.app.keywordBank.tabDeleteState.active && $store.app.keywordBank.tabDeleteState.groupId === group.id && group.tabs.length > 1"
+                                                    @click.stop="$store.app.deleteTabFromGroup(group.id, tab.name)"
+                                                    class="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-4 h-4 flex items-center justify-center text-xs leading-none hover:bg-red-700 transition-colors" x-cloak>&times;</button>
+                                        </div>
+                                    </template>
+                                    <div class="relative">
+                                         <button @click="$store.app.toggleTabDeleteMode(group.id)" x-show="group.tabs.length > 1"
+                                                class="opacity-0 group-hover:opacity-100 transition-opacity rounded-full w-6 h-6 flex items-center justify-center"
+                                                :class="$store.app.keywordBank.tabDeleteState.active && $store.app.keywordBank.tabDeleteState.groupId === group.id ? 'bg-red-200 text-red-700 hover:bg-red-300' : 'bg-red-100 text-red-600 hover:bg-red-200'"
+                                                title="탭 삭제">
+                                            <span class="material-symbols-outlined text-base">remove</span>
+                                        </button>
+                                    </div>
+                                    <div class="relative">
+                                        <button x-show="!isAddingTab"
+                                                @click="isAddingTab = true; $nextTick(() => $refs.newTabInput?.focus())"
+                                                class="opacity-0 group-hover:opacity-100 transition-opacity bg-blue-100 text-blue-600 rounded-full w-6 h-6 flex items-center justify-center hover:bg-blue-200"
+                                                title="탭 추가">
+                                            <span class="material-symbols-outlined text-base">add</span>
+                                        </button>
+                                        <div x-show="isAddingTab" @click.outside="isAddingTab = false; newTabName = ''" class="flex items-center gap-1 p-1 bg-slate-200 rounded-lg" x-cloak>
+                                            <input type="text" x-ref="newTabInput" x-model="newTabName" placeholder="새 탭 이름"
+                                                   class="text-xs p-1 rounded-md border-slate-300 w-24"
+                                                   @keydown.enter.prevent="confirmAddTab()"
+                                                   @keydown.escape.prevent="isAddingTab = false; newTabName = ''">
+                                            <button @click="confirmAddTab()" class="text-green-600 hover:bg-green-100 rounded-full p-0.5">
+                                                <span class="material-symbols-outlined text-sm">check</span>
+                                            </button>
+                                            <button @click="isAddingTab = false; newTabName = ''" class="text-red-500 hover:bg-red-100 rounded-full p-0.5">
+                                                <span class="material-symbols-outlined text-sm">close</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <ul class="space-y-1 max-h-96 overflow-y-auto">
+                                    <template x-for="(item, index) in filteredKeywords" :key="item.id">
+                                        <li>
+                                             <div class="bank-item bg-white p-3 rounded-lg border shadow-sm flex justify-between items-center cursor-pointer"
+                                                  @click="$store.app.handleKeywordClick($event, item, group)"
+                                                  :class="{ 'selected-in-canvas': $store.app.canvas.activeKeywordIds.includes(item.id) }">
+                                                <div>
+                                                    <p class="font-bold" x-text="item.keyword"></p>
+                                                    <p class="text-sm text-slate-500" x-text="item.desc"></p>
+                                                </div>
+                                                <div class="item-controls flex items-center gap-1 transition-opacity">
+                                                    <button @click.stop="$store.app.openMoveMenu($event, item, group)" 
+                                                            class="p-1 rounded-full text-slate-500 hover:bg-slate-200"
+                                                            title="위치 변경">
+                                                        <span class="material-symbols-outlined text-base">open_with</span>
+                                                    </button>
+                                                    <button @click.stop="$store.app.removeKeywordFromBank(group.id, item.id)"
+                                                            class="p-1 rounded-full text-red-500 hover:bg-red-100"
+                                                            title="삭제">
+                                                        <span class="material-symbols-outlined text-base">delete</span>
+                                                    </button>
+                                                </div>
+                                             </div>
+                                        </li>
+                                    </template>
+                                </ul>
+                            </div>
+                        </div>
+                    </template>
+
+                    <div x-data="{ isAdding: false }" class="mt-4 pt-4 border-t border-slate-200 space-y-2">
+                        <!-- Add Keyword Section -->
+                        <div x-show="isAdding" x-transition class="p-4 bg-slate-50 rounded-lg space-y-4">
+                             <div x-data="{ newKeyword: '', newDesc: '' }">
+                                <h4 class="font-bold text-slate-800">새 키워드 추가</h4>
+                                <p class="text-sm text-slate-500">첫번째 사용자 그룹에 추가됩니다.</p>
+                                <div class="mt-2 space-y-2">
+                                     <input type="text" placeholder="키워드 이름 (AI 지원 시 자유롭게 입력)" class="w-full p-2 border rounded-md border-slate-300 bg-white" x-model="newKeyword" @keydown.enter="$store.app.addNewKeyword(newKeyword, newDesc); newKeyword=''; newDesc='';">
+                                     <input type="text" placeholder="설명 (선택, 비워둘 수 있음)" class="w-full p-2 border rounded-md border-slate-300 bg-white" x-model="newDesc" @keydown.enter="$store.app.addNewKeyword(newKeyword, newDesc); newKeyword=''; newDesc='';">
+                                     <button class="w-full bg-blue-500 text-white font-bold py-2 px-3 rounded-lg hover:bg-blue-600 flex items-center justify-center" @click="$store.app.addNewKeyword(newKeyword, newDesc); newKeyword=''; newDesc='';" :disabled="$store.app.ui.isLoadingCompletion">
+                                        <span class="material-symbols-outlined spinner text-base" x-show="$store.app.ui.isLoadingCompletion" x-cloak>progress_activity</span>
+                                        <span x-show="!$store.app.ui.isLoadingCompletion">등록</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                         <!-- Add Group Section -->
+                        <div x-show="isAdding" x-transition x-data="{ newGroupName: '' }" class="p-4 bg-slate-50 rounded-lg space-y-2">
+                             <h4 class="font-bold text-slate-800">새 그룹 추가</h4>
+                            <input type="text" x-ref="newGroupNameInput" placeholder="새 그룹 이름 입력..."
+                                   x-model="newGroupName"
+                                   @keydown.enter.prevent="$store.app.addNewGroup(newGroupName); newGroupName='';"
+                                   class="w-full p-2 border rounded-md border-slate-300 bg-white"
+                                   >
+                            <button @click="$store.app.addNewGroup(newGroupName); newGroupName='';" class="w-full bg-blue-500 text-white font-semibold py-2 px-3 rounded-lg hover:bg-blue-600">추가</button>
+                        </div>
+
+                        <button @click="isAdding = !isAdding"
+                                class="w-full flex items-center justify-center gap-2 text-slate-500 hover:text-blue-600 transition-colors py-2 px-4 rounded-lg hover:bg-slate-100">
+                            <span class="material-symbols-outlined transition-transform" :class="{'rotate-45': isAdding}">add_circle</span>
+                            <span class="font-semibold" x-text="isAdding ? '닫기' : '새 키워드/그룹 추가'"></span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Prompt Canvas & Image Result -->
+            <div class="lg:col-span-2 space-y-6">
+                <div id="prompt-canvas-container" class="bg-white p-6 rounded-2xl shadow-lg" :class="{'collapsed': $store.app.ui.isCanvasCollapsed}">
+                    <div class="flex flex-wrap justify-between items-center mb-4 border-b pb-2 gap-2 border-slate-200">
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-2 cursor-pointer" @click="$store.app.ui.isCanvasCollapsed = !$store.app.ui.isCanvasCollapsed">
+                                <span class="material-symbols-outlined toggle-icon text-slate-500">expand_more</span>
+                                <h2 class="text-2xl font-bold">📝 프롬프트 캔버스</h2>
+                            </div>
+                            <!-- MERGED PRESET BUTTON -->
+                            <div class="flex items-center gap-2">
+                                <button class="text-slate-500 hover:text-blue-600 transition-colors" title="프리셋 관리" @click.stop="$store.app.openModal('load-preset-modal')">
+                                    <span class="material-symbols-outlined">folder</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="flex gap-2 flex-wrap">
+                            <button class="bg-[#4285F4] hover:bg-[#3367D6] text-white font-bold py-2 px-4 rounded-lg transition-colors inline-flex items-center gap-2 disabled:opacity-50" @click="$store.app.generatePromptSentence()" :disabled="$store.app.ui.isLoadingCompletion">
+                                <span class="material-symbols-outlined text-base spinner" x-show="$store.app.ui.isLoadingCompletion" x-cloak>progress_activity</span>
+                                <span class="material-symbols-outlined text-base" x-show="!$store.app.ui.isLoadingCompletion">lightbulb</span>
+                                <span>AI 프롬프트 완성</span>
+                            </button>
+                             <button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-opacity inline-flex items-center gap-2" @click="$store.app.clearCanvasAndAttachments()">
+                                <span class="material-symbols-outlined text-base">delete</span> <span>캔버스 비우기</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div id="prompt-canvas" class="space-y-3">
+                        <template x-for="area in $store.app.canvasAreaInfo" :key="area.key">
+                            <div x-data="promptCanvasArea(area.key, area.title)"
+                                 :id="`area-${key}`"
+                                 class="prompt-canvas-area bg-slate-50 px-4 py-3 rounded-lg relative"
+                                 @dragover.prevent="$store.app.handleCanvasDragOver($event, key)"
+                                 @drop.prevent="$store.app.handleCanvasDrop($event, key)">
+                                <h3 class="font-bold text-lg mb-2" x-text="title"></h3>
+                                <div class="flex flex-wrap gap-2 min-h-[36px] relative">
+                                    <template x-for="(item, index) in keywords" :key="item.instanceId">
+                                        <div class="prompt-keyword bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full flex items-center gap-2 cursor-grab border-2 border-transparent" 
+                                            :data-instance-id="item.instanceId" :data-id="item.id" draggable="true" 
+                                            @dragstart="$store.app.handleCanvasDragStart($event, item, key)"
+                                            :class="{'opacity-25': $store.app.canvas.draggingItem && $store.app.canvas.draggingItem.item.instanceId === item.instanceId}">
+                                            <span x-text="item.keyword"></span>
+                                            <button class="remove-keyword-btn text-blue-600 hover:text-blue-900" @click="$store.app.removeKeywordFromCanvas(item.instanceId)">
+                                                <span class="material-symbols-outlined text-base pointer-events-none">cancel</span>
+                                            </button>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+                
+                <!-- Image Attachment Area -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <div class="flex flex-wrap justify-between items-center gap-y-2 mb-4 border-b pb-2 border-slate-200">
+                        <div class="flex items-center gap-4">
+                            <h2 class="text-2xl font-bold">🖼️ 이미지 첨부</h2>
+                            <label for="image-upload-input" class="cursor-pointer text-slate-500 hover:text-blue-600" title="이미지 첨부 (최대 20장)">
+                                <span class="material-symbols-outlined">attachment</span>
+                            </label>
+                            <button class="cursor-pointer text-slate-500 hover:text-blue-600" title="그림판 열기" @click="$store.app.openModal('fabric-modal', {mode: 'draw'})">
+                                <span class="material-symbols-outlined">brush</span>
+                            </button>
+                            <div class="text-sm text-slate-500" :class="{ 'text-red-500 font-bold': $store.app.referenceImagesSizeInfo.exceeds }">
+                                <span x-text="`${$store.app.referenceImagesSizeInfo.current.toFixed(1)} / ${$store.app.referenceImagesSizeInfo.max.toFixed(1)} MB`"></span>
+                            </div>
+                            <input type="file" id="image-upload-input" multiple accept="image/*" class="hidden" @change="$store.app.handleFileUpload($event)">
+                        </div>
+                    </div>
+                    <div id="image-thumbnail-container" class="flex flex-wrap items-center gap-1.5 px-1 rounded-lg bg-slate-50 min-h-[80px]">
+                        <template x-for="(img, index) in $store.app.attachments.images" :key="img.id">
+                            <div class="thumbnail-item relative cursor-pointer"
+                                @click="$store.app.selectImage(img)"
+                                draggable="true"
+                                @dragstart="$store.app.handleImageDragStart($event, img)"
+                                @dragover.prevent="$store.app.handleImageDragOver($event, index)"
+                                @drop.prevent="$store.app.handleImageDrop($event, index)">
+                                <img :src="img.dataUrl" class="w-16 h-16 object-cover rounded-md pointer-events-none" :class="{ 'ring-2 ring-offset-2 ring-blue-500': $store.app.ui.selectedImageId === img.id, 'opacity-50': $store.app.attachments.draggingItem && $store.app.attachments.draggingItem.id === img.id }">
+                                <div x-show="index < $store.app.settings.referenceImageCount" class="absolute top-0 left-0 bg-black bg-opacity-60 text-white rounded-br-md rounded-tl-md text-xs font-bold w-4 h-4 flex items-center justify-center" x-text="index + 1" x-cloak></div>
+                                <button class="remove-img-btn absolute top-0 right-0 bg-black bg-opacity-50 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs -mt-1 -mr-1" @click.stop="$store.app.removeAttachment(img.id)">
+                                    <span class="material-symbols-outlined text-sm pointer-events-none">close</span>
+                                </button>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Final Prompt & Image Result Area -->
+                <div class="bg-white p-6 rounded-2xl shadow-lg">
+                    <div class="flex justify-between items-center mb-2">
+                        <div class="flex items-center gap-3">
+                             <h2 class="text-2xl font-bold">최종 프롬프트</h2>
+                             <button class="text-slate-500 hover:text-blue-600 transition-colors" title="프롬프트 생성 히스토리" @click="$store.app.openModal('history-modal')">
+                                <span class="material-symbols-outlined">history</span>
+                            </button>
+                            <button class="text-slate-500 hover:text-blue-600 transition-colors" title="수동 프롬프트 편집" @click="$store.app.openModal('manual-prompt-modal')">
+                                <span class="material-symbols-outlined">keyboard</span>
+                            </button>
+                            <div class="text-sm text-slate-500" :class="{ 'text-red-500 font-bold': $store.app.promptLengthInfo.exceeds }">
+                                <span x-text="`${$store.app.promptLengthInfo.current} / ${$store.app.promptLengthInfo.max} 자`"></span>
+                            </div>
+                        </div>
+                         <div class="flex items-center gap-2">
+                            <div x-data="{ open: false }" class="relative">
+                                <button @click="open = !open"
+                                        class="text-slate-500 hover:text-blue-600 transition-colors" title="파라미터 설정">
+                                    <span class="material-symbols-outlined">tune</span>
+                                </button>
+                                <div x-show="open" @click.outside="open = false" x-transition class="absolute z-10 right-0 bottom-full mb-2 bg-white rounded-lg shadow-xl border w-80 p-4 space-y-4">
+                                    <div class="space-y-2">
+                                        <label class="text-sm font-bold text-slate-700">생성 모델</label>
+                                         <div class="inline-flex rounded-md shadow-sm w-full" role="group">
+                                            <button type="button" @click="$store.app.settings.generationModel = 'gemini'" class="w-1/2 px-4 py-2 text-sm font-medium rounded-l-lg border focus:z-10 focus:ring-2" :class="{'bg-blue-600 text-white border-blue-600': $store.app.settings.generationModel === 'gemini', 'bg-white text-gray-900 border-gray-200': $store.app.settings.generationModel !== 'gemini' }">🍌 Gemini Flash</button>
+                                            <button type="button" @click="$store.app.settings.generationModel = 'imagen'" class="w-1/2 px-4 py-2 text-sm font-medium rounded-r-lg border focus:z-10 focus:ring-2" :class="{'bg-blue-600 text-white border-blue-600': $store.app.settings.generationModel === 'imagen', 'bg-white text-gray-900 border-gray-200': $store.app.settings.generationModel !== 'imagen' }">🦄 Imagen 3</button>
+                                         </div>
+                                    </div>
+
+                                     <div class="space-y-2">
+                                        <label class="text-sm font-bold text-slate-700">AI 해석 수준</label>
+                                         <div class="inline-flex rounded-md shadow-sm w-full" role="group">
+                                            <button type="button" @click="$store.app.settings.interpretationLevel = 'precise'" class="w-1/3 px-4 py-2 text-sm font-medium rounded-l-lg border focus:z-10 focus:ring-2" :class="{'bg-blue-600 text-white border-blue-600': $store.app.settings.interpretationLevel === 'precise', 'bg-white text-gray-900 border-gray-200': $store.app.settings.interpretationLevel !== 'precise' }">정확하게</button>
+                                            <button type="button" @click="$store.app.settings.interpretationLevel = 'balanced'" class="w-1/3 px-4 py-2 text-sm font-medium border-t border-b focus:z-10 focus:ring-2" :class="{'bg-blue-600 text-white border-blue-600': $store.app.settings.interpretationLevel === 'balanced', 'bg-white text-gray-900 border-gray-200': $store.app.settings.interpretationLevel !== 'balanced' }">균형 있게</button>
+                                            <button type="button" @click="$store.app.settings.interpretationLevel = 'creative'" class="w-1/3 px-4 py-2 text-sm font-medium rounded-r-lg border focus:z-10 focus:ring-2" :class="{'bg-blue-600 text-white border-blue-600': $store.app.settings.interpretationLevel === 'creative', 'bg-white text-gray-900 border-gray-200': $store.app.settings.interpretationLevel !== 'creative' }">자유롭게</button>
+                                         </div>
+                                    </div>
+                                    
+                                    <div class="space-y-2">
+                                        <label for="number-of-images" class="text-sm font-bold text-slate-700">출력 개수: <span x-text="$store.app.settings.numberOfImages"></span></label>
+                                        <input id="number-of-images" type="range" min="1" max="4" step="1" x-model.number="$store.app.settings.numberOfImages" class="w-full">
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label for="reference-image-count" class="text-sm font-bold text-slate-700">참조 이미지: <span x-text="$store.app.settings.referenceImageCount"></span></label>
+                                        <input id="reference-image-count" type="range" min="0" max="4" x-model.number="$store.app.settings.referenceImageCount" class="w-full">
+                                    </div>
+
+                                    <div class="space-y-4 pt-2 border-t border-slate-200">
+                                         <div class="space-y-2">
+                                            <div class="flex items-center">
+                                                <label class="text-sm font-bold text-slate-700">비율</label>
+                                            </div>
+                                            <select x-model="$store.app.settings.aspectRatio" class="w-full p-2 border rounded-md border-slate-300 bg-white" :disabled="$store.app.settings.generationModel === 'gemini' && $store.app.attachments.images.slice(0, $store.app.settings.referenceImageCount).length > 0">
+                                                <template x-for="option in $store.app.aspectRatioOptions" :key="option.ratio">
+                                                    <option :value="option.ratio" x-text="`${option.ratio} ${option.desc}`"></option>
+                                                </template>
+                                            </select>
+                                        </div>
+                                        <div class="space-y-2 transition-opacity" :class="{'opacity-50 cursor-not-allowed': $store.app.settings.generationModel === 'gemini'}">
+                                             <label class="text-sm font-bold text-slate-700">네거티브 프롬프트</label>
+                                             <textarea x-model="$store.app.settings.negativePrompt" rows="2" class="w-full p-2 text-sm border rounded-md" placeholder="ugly, blurry..." :disabled="$store.app.settings.generationModel === 'gemini'"></textarea>
+                                        </div>
+                                        <div class="space-y-2 transition-opacity" :class="{'opacity-50 cursor-not-allowed': $store.app.settings.generationModel === 'gemini'}">
+                                            <label class="text-sm font-bold text-slate-700">Seed</label>
+                                            <input type="number" placeholder="Random" x-model="$store.app.settings.seed" class="w-full p-2 border rounded-md border-slate-300 bg-white" :disabled="$store.app.settings.generationModel === 'gemini'">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="generate-image-btn" class="bg-[#4285F4] hover:bg-[#3367D6] text-white font-bold py-2 px-4 rounded-lg transition-colors inline-flex items-center gap-2 disabled:opacity-50" @click="$store.app.generateImage()" :disabled="$store.app.ui.isLoadingImage">
+                                <span class="material-symbols-outlined text-base spinner" x-show="$store.app.ui.isLoadingImage" x-cloak>progress_activity</span>
+                                <span class="material-symbols-outlined text-base" x-show="!$store.app.ui.isLoadingImage">auto_awesome</span>
+                                <span>이미지 생성</span>
+                            </button>
+                         </div>
+                    </div>
+                    <div class="relative group">
+                        <textarea id="result-output" rows="4" class="w-full p-4 border border-slate-300 rounded-lg bg-slate-100 text-slate-700 transition-all" readonly :value="$store.app.getFinalPrompt()"></textarea>
+                         <button @click="$store.app.copyToClipboard($store.app.getFinalPrompt())" title="프롬프트 복사"
+                                class="absolute top-2 right-2 p-1.5 bg-slate-200 text-slate-600 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-slate-300">
+                            <span class="material-symbols-outlined text-base">content_copy</span>
+                        </button>
+                    </div>
+                    
+                    <div id="image-result-container" 
+                        class="mt-4 w-full aspect-square bg-slate-100 rounded-lg flex items-center justify-center relative transition-all">
+                        <div id="image-loader" class="loader" x-show="$store.app.ui.isLoadingImage" x-cloak></div>
+                        <img id="generated-image" :src="$store.app.ui.generatedImageUrl" alt="AI Generated Image" class="w-full h-full object-contain rounded-lg" x-show="$store.app.ui.generatedImageUrl && !$store.app.ui.isLoadingImage" draggable="false" x-cloak>
+                        <p id="image-placeholder" class="text-slate-500" x-show="!$store.app.ui.generatedImageUrl && !$store.app.ui.isLoadingImage">AI 생성 이미지가 여기에 표시됩니다.</p>
+                        
+                        <div class="absolute top-3 left-3 flex items-start gap-2" x-show="$store.app.ui.generatedImageUrl && !$store.app.ui.isLoadingImage" x-cloak>
+                            <div class="group relative">
+                                <button @click="$store.app.ui.isImageInfoPinned = !$store.app.ui.isImageInfoPinned"
+                                        class="bg-white text-slate-700 font-bold py-1 px-3 rounded-lg hover:bg-slate-200 transition-all shadow-md"
+                                        :class="{ 'bg-blue-500 text-white hover:bg-blue-600': $store.app.ui.isImageInfoPinned }">
+                                    <span class="material-symbols-outlined text-base">info</span>
+                                </button>
+                                <!-- The Info Panel -->
+                                <div class="absolute left-0 top-full mt-2 w-48 bg-black/70 backdrop-blur-sm text-white text-xs rounded-lg p-2 shadow-lg transition-opacity pointer-events-none"
+                                     :class="{
+                                         'opacity-100': $store.app.ui.isImageInfoPinned,
+                                         'opacity-0 group-hover:opacity-100': !$store.app.ui.isImageInfoPinned
+                                     }">
+                                    <p class="font-bold truncate" x-text="$store.app.ui.currentImageInfo.name || '...'" title="파일명"></p>
+                                    <p x-text="`해상도: ${$store.app.ui.currentImageInfo.resolution || '...'}`"></p>
+                                    <p x-text="`크기: ${$store.app.ui.currentImageInfo.size || '...'}`"></p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="absolute top-3 right-3 flex gap-2" x-show="$store.app.ui.generatedImageUrl && !$store.app.ui.isLoadingImage" x-cloak>
+                            <a :href="$store.app.ui.generatedImageUrl" :download="`prompt_studio_${Date.now()}.png`" class="bg-white text-slate-700 font-bold py-1 px-3 rounded-lg hover:bg-slate-200 transition-all shadow-md" title="다운로드" id="download-image-btn">
+                                <span class="material-symbols-outlined text-base">download</span>
+                            </a>
+                        </div>
+                        <div id="interactive-controls-container" class="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2" x-show="$store.app.ui.generatedImageUrl && !$store.app.ui.isLoadingImage" @click.outside="$store.app.ui.isInteractivePanelVisible = false" x-cloak>
+                            <div id="interactive-panel" 
+                                class="interactive-panel absolute bottom-full mb-2 bg-black/70 backdrop-blur-sm rounded-xl py-4 px-0.5 flex flex-row w-auto max-w-5xl" 
+                                x-show="$store.app.ui.isInteractivePanelVisible" x-transition x-cloak
+                                >
+                                <template x-for="(category, index) in $store.app.interactiveControlsLayout" :key="category.category">
+                                    <div class="flex">
+                                        <div class="text-white px-2" style="min-width: 270px;">
+                                            <h4 class="font-bold text-center text-lg mb-3" x-text="{subjectControl: '피사체 제어', cameraControl: '카메라 제어', imageTransform: '이미지 변환'}[category.category]"></h4>
+                                            <template x-for="subcategory in category.subcategories" :key="subcategory.name">
+                                                <div class="flex items-start gap-2 my-2">
+                                                    <p class="font-bold text-sm text-slate-300 w-16 text-right shrink-0 pt-1" x-text="{expression: '표정', props: '소품', action: '동작', rotation: '회전', environment: '환경', lens: '렌즈', zoom: '줌', angle: '앵글', style: '스타일', advancedEditing: '편집'}[subcategory.name]"></p>
+                                                    <div class="flex-1 flex flex-wrap">
+                                                        <template x-for="controlKey in subcategory.controls" :key="controlKey">
+                                                             <button class="interactive-btn"
+                                                                :title="{smile: '미소', sad: '슬픔', surprised: '놀람', angry: '화남', glasses: '안경', bag: '가방', book: '책', smartphone: '스마트폰', wave: '손 흔들기', run: '달리기', sit: '앉기', jump: '점프', 'rotate-left': '좌측으로 회전', 'rotate-180': '180° 회전', 'rotate-right': '우측으로 회전', 'replace-background': '배경 교체', 'change-time-day': '시간대 변경 (낮)', 'change-time': '시간대 변경 (밤)', 'change-weather': '날씨 변경 (비)', bokeh: '배경 흐림', 'wide-angle': '광각 렌즈', fisheye: '어안 렌즈', 'zoom-in': '줌 인', 'zoom-out': '줌 아웃', 'extreme-closeup': '익스트림 클로즈업', 'low-angle': '로우 앵글', 'high-angle': '하이 앵글', 'top-view': '탑 뷰', upscale: '해상도 향상', outpainting: '캔버스 확장', inpainting: '부분 수정', 'oil-painting-style': '유화 효과', 'anime-style': '애니메이션 효과', 'comic-book-style': '코믹북 효과', 'pixel-art-style': '픽셀아트 효과', 'id-photo': '증명사진 변환'}[controlKey]"
+                                                                @click="$store.app.handleInteractiveClick(controlKey)">
+                                                                <span class="material-symbols-outlined" x-text="$store.app.getIconForKey(controlKey)"></span>
+                                                             </button>
+                                                        </template>
+                                                    </div>
+                                                </div>
+                                            </template>
+                                        </div>
+                                        <div x-show="index < $store.app.interactiveControlsLayout.length - 1" class="border-r border-white/20"></div>
+                                    </div>
+                                </template>
+                            </div>
+                            <button id="interactive-controls-trigger"
+                                class="w-12 h-12 rounded-full bg-gradient-to-r from-purple-500 to-sky-500 text-white hover:opacity-90 transition-all flex items-center justify-center shadow-lg duration-300"
+                                @click="$store.app.toggleInteractivePanel()">
+                                <span class="material-symbols-outlined text-3xl transition-all">auto_awesome</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Unified Fabric Modal -->
+    <div id="fabric-modal" x-data="fabricModal()" x-show="$store.app.ui.activeModal === 'fabric-modal'" x-transition class="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center p-4" @click.self="$store.app.closeModal()" x-cloak>
+        <div class="flex flex-col md:flex-row items-center gap-4 w-full h-full max-w-7xl mx-auto">
+            <div x-ref="canvasWrapper" class="relative flex items-center justify-center flex-grow h-full bg-slate-900/50 rounded-lg">
+                <canvas x-ref="canvas" class="rounded-lg shadow-xl"></canvas>
+            </div>
+            <div class="flex-shrink-0 flex flex-col gap-4 bg-slate-800 p-4 rounded-lg shadow-2xl w-full md:w-64">
+                <h3 class="text-white font-bold text-center text-xl" x-text="title"></h3>
+                
+                <!-- Dynamic Controls Area -->
+                <div class="space-y-4">
+                    <!-- Draw Controls -->
+                    <template x-if="mode === 'draw'">
+                        <div class="space-y-4">
+                            <div>
+                                <label class="font-semibold text-sm text-white">색상</label>
+                                <input type="color" x-model="brushColor" @input="updateBrush()" class="w-full h-10 p-1 border rounded-md cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="font-semibold text-sm text-white"><span>크기</span>: <span x-text="brushSize"></span></label>
+                                <input type="range" min="1" max="50" x-model="brushSize" @input="updateBrush()" class="w-full">
+                            </div>
+                        </div>
+                    </template>
+                    <!-- Inpainting Controls -->
+                    <template x-if="mode === 'inpainting'">
+                        <div class="space-y-4">
+                            <div class="space-y-2">
+                                <label class="text-white text-sm font-semibold">마스크 모드</label>
+                                <div class="inline-flex rounded-md shadow-sm w-full" role="group">
+                                    <button type="button" @click="maskMode = 'transform'" class="w-1/2 px-4 py-2 text-sm font-medium text-white bg-transparent rounded-l-lg border border-gray-500 hover:bg-sky-600 hover:border-sky-600 focus:z-10 focus:ring-2 focus:ring-sky-500 transition-colors" :class="{'bg-sky-500 border-sky-500': maskMode === 'transform'}">영역 변환</button>
+                                    <button type="button" @click="maskMode = 'preserve'" class="w-1/2 px-4 py-2 text-sm font-medium text-white bg-transparent rounded-r-lg border border-gray-500 hover:bg-sky-600 hover:border-sky-600 focus:z-10 focus:ring-2 focus:ring-sky-500 transition-colors" :class="{'bg-sky-500 border-sky-500': maskMode === 'preserve'}">영역 유지</button>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-white text-sm font-semibold"><span>브러시 크기</span>: <span x-text="brushSize"></span></label>
+                                <input type="range" min="5" max="100" x-model="brushSize" @input="updateBrush()" class="w-full">
+                            </div>
+                            <div class="space-y-2">
+                                <label class="text-white text-sm font-semibold">수정 내용:</label>
+                                <input type="text" placeholder="예: a cute silver tabby cat" x-model="inpaintingPrompt" class="w-full bg-slate-700 text-white p-2 rounded-md border border-slate-600 focus:outline-none focus:ring-2 focus:ring-sky-500">
+                            </div>
+                        </div>
+                    </template>
+                    <!-- Outpainting Controls -->
+                    <template x-if="mode === 'outpainting'">
+                         <div class="space-y-4">
+                             <div class="bg-slate-700 text-white p-3 rounded-md text-center space-y-2">
+                                <label class="block text-sm font-semibold text-slate-300">예상 해상도 (1MP 환산)</label>
+                                <span class="font-mono text-lg" x-text="scaledResolution">1024x1024</span>
+                            </div>
+                            <div class="bg-slate-700 text-white p-3 rounded-md text-center space-y-2">
+                                <label class="block text-sm font-semibold text-slate-300">남은 확장 용량: <span x-text="expansionBudgetPercent.toFixed(0) + '%'"></span></label>
+                                <div class="w-full bg-slate-600 rounded-full h-2">
+                                    <div class="bg-blue-500 h-2 rounded-full transition-all duration-300" :style="`width: ${expansionBudgetPercent}%`"></div>
+                                </div>
+                                <div class="h-4">
+                                    <p x-show="cornerBudgetConsumption > 0.1" x-transition class="text-xs text-amber-400" x-text="`모서리 확장으로 ${cornerBudgetConsumption.toFixed(0)}% 추가 소모`" x-cloak></p>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-white">위: <span x-text="padding.top.toFixed(0) + '%'"></span></label>
+                                <input type="range" x-model.number="padding.top" min="0" max="100" class="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer" @input="updateExpansionState('top')">
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-white">오른쪽: <span x-text="padding.right.toFixed(0) + '%'"></span></label>
+                                <input type="range" x-model.number="padding.right" min="0" max="100" class="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer" @input="updateExpansionState('right')">
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-white">아래: <span x-text="padding.bottom.toFixed(0) + '%'"></span></label>
+                                <input type="range" x-model.number="padding.bottom" min="0" max="100" class="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer" @input="updateExpansionState('bottom')">
+                            </div>
+                            <div>
+                                <label class="text-sm font-semibold text-white">왼쪽: <span x-text="padding.left.toFixed(0) + '%'"></span></label>
+                                <input type="range" x-model.number="padding.left" min="0" max="100" class="w-full h-2 bg-slate-600 rounded-lg appearance-none cursor-pointer" @input="updateExpansionState('left')">
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <!-- Common Action Buttons -->
+                <div class="flex gap-2">
+                    <button class="flex-1 bg-slate-600 text-white font-bold py-2 px-3 rounded-lg hover:bg-slate-500 transition-colors" title="되돌리기" @click="undo()"><span class="material-symbols-outlined">undo</span></button>
+                    <button class="flex-1 bg-slate-600 text-white font-bold py-2 px-3 rounded-lg hover:bg-slate-500 transition-colors" title="초기화" @click="reset()"><span class="material-symbols-outlined">delete</span></button>
+                </div>
+                <div class="flex flex-col gap-2 mt-auto pt-4 border-t border-slate-600">
+                    <button class="w-full bg-sky-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-sky-600 transition-colors flex items-center justify-center" :disabled="isLoading" @click="run()">
+                        <span class="material-symbols-outlined spinner" x-show="isLoading" x-cloak>progress_activity</span>
+                        <span x-show="!isLoading" x-text="runButtonText"></span>
+                    </button>
+                    <button class="w-full bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-colors" @click="$store.app.closeModal()">취소</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="settings-modal" x-show="$store.app.ui.activeModal === 'settings-modal'" x-transition class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-backdrop" @click.self="$store.app.closeModal()" x-cloak>
+        <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-xl">
+            <div class="flex justify-between items-center mb-6 border-b pb-3 border-slate-200">
+                <h3 class="text-2xl font-bold">⚙️ 설정</h3>
+                <button class="text-slate-500 hover:text-slate-800" @click="$store.app.closeModal()"><span class="material-symbols-outlined">close</span></button>
+            </div>
+            <div class="space-y-6">
+                <div>
+                     <div class="flex items-center mb-2">
+                        <label class="font-bold text-slate-700">Gemini API 키</label>
+                    </div>
+                    <input type="password" id="api-key-input" class="w-full p-2 border rounded-md border-slate-300 bg-white" placeholder="API 키를 여기에 붙여넣으세요" x-model="$store.app.settings.apiKey">
+                    <p class="text-xs text-slate-500 mt-1">API 키는 브라우저에만 저장되며 외부로 전송되지 않습니다. Canvas 환경에서는 자동 키가 우선 적용됩니다.</p>
+                </div>
+                 <div class="flex items-center justify-between">
+                    <div>
+                        <label class="font-bold text-slate-700">AI 키워드 생성 지원</label>
+                        <p class="text-sm text-slate-600">키워드 추가 시, 자동으로 영문 번역 및 설명을 생성합니다.</p>
+                    </div>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="ai-support-toggle" x-model="$store.app.settings.aiKeywordSupport">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+                <div class="flex items-center justify-between pt-6">
+                    <div>
+                        <label class="font-bold text-slate-700">초기화</label>
+                        <p class="text-sm text-slate-600">모든 사용자 데이터를 삭제하고 프로그램을 처음 상태로 되돌립니다.</p>
+                    </div>
+                    <button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600 transition-opacity" @click="$store.app.openModal('confirm-modal')">초기화</button>
+                </div>
+            </div>
+            <div class="mt-8 pt-4 border-t flex justify-end gap-3 border-slate-200">
+                 <button class="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600" @click="$store.app.saveState(); $store.app.closeModal()">저장하고 닫기</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================================================================= -->
+    <!-- UNIFIED SIMPLE MODAL CONTAINER                                    -->
+    <!-- ================================================================= -->
+    <div id="unified-simple-modal" 
+         x-show="['confirm-modal', 'delete-tab-confirm-modal', 'manual-prompt-modal'].includes($store.app.ui.activeModal)"
+         x-transition class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-backdrop" 
+         @click.self="$store.app.closeModal()" x-cloak>
+        
+        <div class="bg-white p-6 rounded-2xl shadow-lg w-full"
+             :class="{
+                 'max-w-sm': ['confirm-modal', 'delete-tab-confirm-modal'].includes($store.app.ui.activeModal),
+                 'max-w-2xl': $store.app.ui.activeModal === 'manual-prompt-modal'
+             }">
+    
+            <!-- Template for: confirm-modal (Factory Reset) -->
+            <template x-if="$store.app.ui.activeModal === 'confirm-modal'">
+                <div>
+                    <h3 class="text-xl font-bold mb-4 text-red-600">⚠️ 초기화를 진행하시겠습니까?</h3>
+                    <p class="text-slate-600 mb-6">모든 사용자 데이터(키워드, 그룹, 프리셋, 히스토리, 설정 등)가 영구적으로 삭제됩니다. <span class="font-bold">이 작업은 되돌릴 수 없습니다.</span></p>
+                    <div class="flex justify-end gap-3">
+                        <button class="bg-gray-200 text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300" @click="$store.app.closeModal()">취소</button>
+                        <button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600" @click="$store.app.factoryReset()">확인</button>
+                    </div>
+                </div>
+            </template>
+            
+            <!-- Template for: delete-tab-confirm-modal -->
+            <template x-if="$store.app.ui.activeModal === 'delete-tab-confirm-modal'">
+                <div>
+                    <h3 class="text-xl font-bold mb-4 text-red-600">탭 삭제 확인</h3>
+                    <p class="text-slate-600 mb-6" x-text="$store.app.ui.modalData.confirmMessage"></p>
+                    <div class="flex justify-end gap-3">
+                        <button class="bg-gray-200 text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300" @click="$store.app.closeModal()">취소</button>
+                        <button class="bg-red-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-600" @click="$store.app.confirmDeleteTab()">삭제</button>
+                    </div>
+                </div>
+            </template>
+            
+            <!-- Template for: manual-prompt-modal -->
+            <template x-if="$store.app.ui.activeModal === 'manual-prompt-modal'">
+                 <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-2xl font-bold">수동 프롬프트 편집</h3>
+                        <div class="flex items-center gap-2">
+                             <button class="text-indigo-600 hover:text-indigo-800 disabled:opacity-50" title="AI 양방향 번역" @click="$store.app.translateManualPrompt()" :disabled="$store.app.ui.isLoadingTranslation">
+                                <span class="material-symbols-outlined spinner text-base" x-show="$store.app.ui.isLoadingTranslation" x-cloak>progress_activity</span>
+                                <span class="material-symbols-outlined" x-show="!$store.app.ui.isLoadingTranslation">translate</span>
+                            </button>
+                             <div class="inline-flex rounded-lg shadow-sm" role="group">
+                                <button type="button" class="px-3 py-1 text-sm font-medium transition-colors" @click="$store.app.ui.manualPromptPosition = 'prepend'" :class="{'bg-blue-600 text-white': $store.app.ui.manualPromptPosition === 'prepend', 'bg-white text-gray-900': $store.app.ui.manualPromptPosition !== 'prepend' }">맨 앞</button>
+                                <button type="button" class="px-3 py-1 text-sm font-medium transition-colors" @click="$store.app.ui.manualPromptPosition = 'append'" :class="{'bg-blue-600 text-white': $store.app.ui.manualPromptPosition === 'append', 'bg-white text-gray-900': $store.app.ui.manualPromptPosition !== 'append' }">맨 뒤</button>
+                             </div>
+                        </div>
+                    </div>
+                    <textarea id="manual-prompt-textarea" class="w-full p-2 border rounded-md border-slate-300 bg-white" rows="6" placeholder="추가하고 싶은 프롬프트를 직접 입력하세요..." x-model="$store.app.canvas.manualPrompt"></textarea>
+                    <div class="mt-6 flex justify-end gap-3">
+                        <button class="bg-gray-200 text-slate-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300" @click="$store.app.closeModal()">취소</button>
+                        <button class="bg-blue-500 text-white font-bold py-2 px-4 rounded-lg hover:bg-blue-600" @click="$store.app.closeModal()">완료</button>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <!-- REFACTORED PRESET/HISTORY MODALS -->
+    <template x-ref="listItemComponent">
+        <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 flex flex-col gap-2">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <!-- Title for Preset -->
+                    <template x-if="type === 'preset'">
+                        <div class="flex items-center gap-2">
+                            <template x-if="$store.app.ui.editingPresetId !== item.id">
+                                <span class="text-lg font-bold" x-text="item.name"></span>
+                            </template>
+                            <input type="text" x-show="$store.app.ui.editingPresetId === item.id" :value="item.name"
+                                   class="text-lg font-bold bg-white border border-blue-500 rounded px-1"
+                                   @keydown.enter="$store.app.updatePresetName(item.id, $event.target.value)"
+                                   @blur="$store.app.updatePresetName(item.id, $event.target.value)"
+                                   :x-ref="`preset-input-${item.id}`"
+                                   x-cloak>
+                        </div>
+                    </template>
+                    <!-- Title for History -->
+                    <template x-if="type === 'history'">
+                        <span class="text-sm font-bold text-slate-500" x-text="new Date(item.id).toLocaleString()"></span>
+                    </template>
+                    
+                    <span class="text-sm text-slate-500">- <span x-text="item.promptLength + '자'"></span></span>
+
+                    <!-- Metadata Icons -->
+                     <div class="flex items-center gap-2">
+                        <template x-if="type === 'history'">
+                            <div class="flex items-center gap-2">
+                                <span x-show="item.modelUsed === 'gemini'" title="Gemini 2.5 Flash Image">🍌</span>
+                                <span x-show="item.modelUsed === 'imagen'" title="Imagen 3">🦄</span>
+                                <span x-show="item.status === 'success'" class="material-symbols-outlined text-green-500" title="성공">check_circle</span>
+                                <div x-show="item.status === 'failure'" class="flex items-center gap-1 text-red-500" title="실패">
+                                    <span class="material-symbols-outlined">warning</span>
+                                    <span class="text-xs font-bold" x-text="{ technical: '기술적 오류', recitation: '저작권', other: '기타', sexually_explicit: '성적 콘텐츠', hate_speech: '혐오 발언', harassment: '괴롭힘', dangerous_content: '폭력/위험' }[item.reason] || ''"></span>
+                                </div>
+                            </div>
+                        </template>
+                        <span x-show="(type === 'preset' && item.seed) || (type === 'history' && item.metadata && item.metadata.seed)" :title="`Seed: ${type === 'preset' ? item.seed : item.metadata.seed}`" @click="$store.app.copyToClipboard(type === 'preset' ? item.seed : item.metadata.seed)" class="cursor-pointer">
+                            <span class="material-symbols-outlined text-base text-slate-500">casino</span>
+                        </span>
+                         <span x-show="type === 'history' && item.metadata && item.metadata.refFilename" :title="`참조 파일: ${item.metadata.refFilename}`">
+                            <span class="material-symbols-outlined text-base text-slate-500">attachment</span>
+                        </span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                     <button x-show="type === 'preset'" class="text-slate-500 hover:text-slate-600" title="이름 수정" @click="$store.app.ui.editingPresetId = item.id; $nextTick(() => $refs[`preset-input-${item.id}`]?.focus())"><span class="material-symbols-outlined">edit</span></button>
+                     <button x-show="type === 'history'" class="text-green-500 hover:text-green-600" title="프리셋으로 저장" @click="$store.app.savePresetFromHistory(item.id)"><span class="material-symbols-outlined">save</span></button>
+                     <button class="text-blue-500 hover:text-blue-600" title="불러오기" @click="type === 'preset' ? $store.app.loadPreset(item.id) : $store.app.restoreHistory(item.id)"><span class="material-symbols-outlined">undo</span></button>
+                     <button class="text-red-500 hover:text-red-600" title="삭제" @click="type === 'preset' ? $store.app.deletePreset(item.id) : $store.app.deleteHistory(item.id)"><span class="material-symbols-outlined">delete</span></button>
+                </div>
+            </div>
+            <div class="text-sm bg-slate-100 p-3 rounded-md text-slate-700">
+                <span x-text="item.promptText"></span>
+            </div>
+        </div>
+    </template>
+
+    <div id="load-preset-modal" x-show="$store.app.ui.activeModal === 'load-preset-modal'" x-transition class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-backdrop" @click.self="$store.app.closeModal()" x-cloak>
+        <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                <h3 class="text-2xl font-bold">📂 프리셋 관리</h3>
+                <div class="flex items-center gap-2">
+                    <button class="text-blue-500 hover:text-blue-600 transition-colors" title="현재 캔버스 저장" @click="$store.app.saveCurrentCanvasAsPreset()">
+                        <span class="material-symbols-outlined">save</span>
+                    </button>
+                    <button class="text-slate-500 hover:text-slate-800" @click="$store.app.closeModal()"><span class="material-symbols-outlined">close</span></button>
+                </div>
+            </div>
+            <div class="relative mb-4 flex-shrink-0">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                <input type="text" placeholder="프리셋 검색..." class="w-full p-2 pl-10 border rounded-md border-slate-300 bg-white" x-model="$store.app.ui.presetSearchTerm">
+            </div>
+            <div class="overflow-y-auto flex-grow">
+                <template x-if="$store.app.filteredPresets.length === 0">
+                    <div class="text-center text-slate-500 p-8">저장된 프리셋이 없습니다.</div>
+                </template>
+                <div class="space-y-4">
+                    <template x-for="item in $store.app.filteredPresets" :key="item.id">
+                        <div x-data="{ item: item, type: 'preset' }" x-html="$refs.listItemComponent.innerHTML"></div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="history-modal" x-show="$store.app.ui.activeModal === 'history-modal'" x-transition class="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4 modal-backdrop" @click.self="$store.app.closeModal()" x-cloak>
+        <div class="bg-white p-6 rounded-2xl shadow-lg w-full max-w-3xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-4 flex-shrink-0">
+                <h3 class="text-2xl font-bold">📜 프롬프트 히스토리</h3>
+                <button class="text-slate-500 hover:text-slate-800" @click="$store.app.closeModal()"><span class="material-symbols-outlined">close</span></button>
+            </div>
+             <div class="relative mb-4 flex-shrink-0">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">search</span>
+                <input type="text" placeholder="히스토리 검색..." class="w-full p-2 pl-10 border rounded-md border-slate-300 bg-white" x-model="$store.app.ui.historySearchTerm">
+            </div>
+            <div class="overflow-y-auto flex-grow">
+                <template x-if="$store.app.filteredHistory.length === 0">
+                    <div class="text-center text-slate-500 p-8">생성 기록이 없습니다.</div>
+                </template>
+                <div class="space-y-4">
+                    <template x-for="item in $store.app.filteredHistory" :key="item.id">
+                        <div x-data="{ item: item, type: 'history' }" x-html="$refs.listItemComponent.innerHTML"></div>
+                    </template>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast-message" class="toast" x-show="$store.app.ui.toast.show" x-text="$store.app.ui.toast.message" x-transition:enter="transition ease-out duration-300" x-transition:enter-start="opacity-0 translate-y-full" x-transition:enter-end="opacity-100 translate-y-0" x-transition:leave="transition ease-in duration-300" x-transition:leave-start="opacity-100 translate-y-0" x-transition:leave-end="opacity-0 translate-y-full"></div>
+
+    <!-- Keyword Move Menu -->
+    <div x-show="$store.app.ui.moveMenu.visible"
+         @click.outside="$store.app.closeMoveMenu()"
+         x-transition
+         :style="`position: absolute; top: ${$store.app.ui.moveMenu.top}px; left: ${$store.app.ui.moveMenu.left}px; z-index: 50;`"
+         class="bg-white rounded-lg shadow-2xl border border-slate-200 w-64 max-h-80 overflow-y-auto p-2"
+         x-cloak>
+        <p class="text-lg font-bold px-2 py-1 text-slate-800">이동할 위치 선택</p>
+        <template x-for="group in [...$store.app.keywordBank.defaultGroups, ...$store.app.keywordBank.userGroups]" :key="group.id">
+            <div class="my-1">
+                <p class="text-sm font-bold text-slate-500 px-2" x-text="group.isDefault ? { subject: '주제', details: '세부 묘사', style: '표현 기법', composition: '구도' }[group.id] : group.name"></p>
+                <template x-for="tab in group.tabs" :key="group.id + '-' + tab.name">
+                    <button 
+                        @click="$store.app.moveKeyword(group.id, tab.name)"
+                        :disabled="$store.app.ui.moveMenu.fromGroupId === group.id && $store.app.ui.moveMenu.fromTabName === tab.name"
+                        class="w-full text-left text-base px-2 py-1.5 rounded hover:bg-blue-50 disabled:bg-slate-200 disabled:cursor-not-allowed">
+                        <span x-text="tab.name"></span>
+                    </button>
+                </template>
+            </div>
+        </template>
+    </div>
+
+    <!-- Keyword Add Menu -->
+    <div x-show="$store.app.ui.addMenu.visible"
+         @click.outside="$store.app.closeAddMenu()"
+         x-transition
+         :style="`position: absolute; top: ${$store.app.ui.addMenu.top}px; left: ${$store.app.ui.addMenu.left}px; z-index: 50;`"
+         class="bg-white rounded-lg shadow-2xl border border-slate-200 w-64 max-h-80 overflow-y-auto p-2"
+         x-cloak>
+        <p class="text-lg font-bold px-2 py-1 text-slate-800">추가할 영역 선택</p>
+        <template x-for="area in $store.app.canvasAreaInfo" :key="area.key">
+            <button 
+                @click="$store.app.addKeywordToCanvas($store.app.ui.addMenu.keyword, area.key); $store.app.closeAddMenu()"
+                class="w-full text-left text-base px-2 py-1.5 rounded hover:bg-blue-50">
+                <span x-text="area.title"></span>
+            </button>
+        </template>
+    </div>
+
+</body>
+</html>
+
