@@ -15,7 +15,7 @@
     <script>
         document.addEventListener('alpine:init', () => {
             const CONSTANTS = {
-                LOCAL_STORAGE_KEY: 'promptStudioData_v6.0_bank_renewal', // Version up
+                LOCAL_STORAGE_KEY: 'promptStudioData_v6.1_gemini_only', // Version up
                 PROMPT_CHAR_LIMIT: 500,
                 IMAGE_SIZE_LIMIT_MB: 20,
                 GEMINI_SAFETY_SETTINGS: [
@@ -163,23 +163,23 @@
                             id: 'details', 
                             keywords: [
                                 { id: 2001, type: 'keyword', keyword: 'long hair', desc: '긴 머리' }, { id: 2002, type: 'keyword', keyword: 'short hair', desc: '짧은 머리' }, { id: 2003, type: 'keyword', keyword: 'blonde hair', desc: '금발' }, { id: 2004, type: 'keyword', keyword: 'red eyes', desc: '붉은 눈' }, { id: 2005, type: 'keyword', keyword: 'blue eyes', desc: '파란 눈' }, { id: 2006, type: 'keyword', keyword: 'glowing eyes', desc: '빛나는 눈' }, { id: 2007, type: 'keyword', keyword: 'muscular', desc: '근육질' }, { id: 2008, type: 'keyword', keyword: 'detailed face', desc: '상세한 얼굴' }, { id: 2009, type: 'keyword', keyword: 'jewelry', desc: '보석' }, { id: 2010, type: 'keyword', keyword: 'tattoo', desc: '문신' },
-                                { id: 2011, type: 'keyword', keyword: 'dress', desc: '드레스' }, { id: 2012, type: 'keyword', keyword: 'suit', desc: '정장' }, { id: 2013, type: 'keyword', keyword: 'armor', desc: '갑옷' }, { id: 2014, type: 'keyword', keyword: 'hoodie', desc: '후드티' }, { id: 2015, type: 'keyword', keyword: 'uniform', desc: '유니폼' }, { id: 2016, type: 'keyword', keyword: 'sunglasses', desc: '선글라스' }, { id: 2017, type: 'keyword', keyword: 'hat', desc: '모자' }, { id: 2018, type: 'keyword', keyword: 'boots', desc: '부츠' }, { id: 2019, type: 'keyword', keyword: 'cape', desc: '망토' },
-                                { id: 2020, type: 'keyword', keyword: 'smiling', desc: '미소짓는' }, { id: 2021, type: 'keyword', keyword: 'crying', desc: '우는' }, { id: 2022, type: 'keyword', keyword: 'looking at viewer', desc: '바라보는' }, { id: 2023, type: 'keyword', keyword: 'sitting', desc: '앉아있는' }, { id: 2024, type: 'keyword', keyword: 'standing', desc: '서있는' }, { id: 2025, type: 'keyword', keyword: 'running', desc: '달리는' }, { id: 2026, type: 'keyword', keyword: 'jumping', desc: '점프하는' }, { id: 2027, type: 'keyword', keyword: 'holding', desc: '들고있는' }, { id: 2028, type: 'keyword', keyword: 'glowing', desc: '빛나는' }
+                                { id: 2011, type: 'keyword', keyword: 'dress', desc: '드레스' }, { id: 2012, type: 'keyword', keyword: 'suit', desc: '정장' }, { id: 2013, type: 'keyword', keyword: 'armor', desc: '갑옷' }, { id: 2014, type: 'keyword', keyword: 'hoodie', desc: '후드티' }, { id: 2015, type: 'keyword', keyword: 'school uniform', desc: '교복' }, { id: 2016, type: 'keyword', keyword: 'sunglasses', desc: '선글라스' }, { id: 2017, type: 'keyword', keyword: 'hat', desc: '모자' }, { id: 2018, type: 'keyword', keyword: 'boots', desc: '부츠' }, { id: 2019, type: 'keyword', keyword: 'cape', desc: '망토' }, { id: 2030, type: 'keyword', keyword: 'jean', desc: '청바지' },
+                                { id: 2020, type: 'keyword', keyword: 'smiling', desc: '미소짓는' }, { id: 2021, type: 'keyword', keyword: 'crying', desc: '우는' }, { id: 2022, type: 'keyword', keyword: 'looking at viewer', desc: '바라보는' }, { id: 2023, type: 'keyword', keyword: 'sitting', desc: '앉아있는' }, { id: 2024, type: 'keyword', keyword: 'standing', desc: '서있는' }, { id: 2025, type: 'keyword', keyword: 'running', desc: '달리는' }, { id: 2026, type: 'keyword', keyword: 'jumping', desc: '점프하는' }, { id: 2027, type: 'keyword', keyword: 'holding', desc: '들고있는' }, { id: 2028, type: 'keyword', keyword: 'glowing', desc: '빛나는' }, { id: 2029, type: 'keyword', keyword: 'barefoot', desc: '맨발' }
                             ], 
                             collapsed: true, 
                             isDefault: true,
                             activeTab: '외형',
                             tabs: [
                                 { name: '외형', keywordIds: [2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010] },
-                                { name: '의상', keywordIds: [2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019] },
-                                { name: '표정/동작', keywordIds: [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028] }
+                                { name: '의상', keywordIds: [2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2030] },
+                                { name: '표정/동작', keywordIds: [2020, 2021, 2022, 2023, 2024, 2025, 2026, 2027, 2028, 2029] }
                             ]
                         },
                         { 
                             id: 'style', 
                             keywords: [
-                                { id: 3001, type: 'keyword', keyword: 'anime', desc: '애니메이션' }, { id: 3002, type: 'keyword', keyword: 'manga', desc: '만화' }, { id: 3003, type: 'keyword', keyword: 'concept art', desc: '컨셉 아트' }, { id: 3004, type: 'keyword', keyword: 'pixel art', desc: '픽셀 아트' }, { id: 3005, type: 'keyword', keyword: 'realistic', desc: '사실적인' }, { id: 3006, type: 'keyword', keyword: 'photorealistic', desc: '사진같은' }, { id: 3007, type: 'keyword', keyword: 'impressionism', desc: '인상주의' }, { id: 3008, type: 'keyword', keyword: 'ghibli style', desc: '지브리 스타일' },
-                                { id: 3009, type: 'keyword', keyword: 'fantasy', desc: '판타지' }, { id: 3010, type: 'keyword', keyword: 'sci-fi', desc: '공상과학' }, { id: 3011, type: 'keyword', keyword: 'cyberpunk', desc: '사이버펑크' }, { id: 3012, type: 'keyword', keyword: 'steampunk', desc: '스팀펑크' }, { id: 3013, type: 'keyword', keyword: 'horror', desc: '호러' }, { id: 3014, type: 'keyword', keyword: 'dystopian', desc: '디스토피아' }, { id: 3015, type: 'keyword', keyword: 'post-apocalyptic', desc: '포스트 아포칼립스' },
+                                { id: 3001, type: 'keyword', keyword: 'anime', desc: '애니메이션' }, { id: 3002, type: 'keyword', keyword: 'manga', desc: '만화' }, { id: 3003, type: 'keyword', keyword: 'concept art', desc: '컨셉 아트' }, { id: 3004, type: 'keyword', keyword: 'pixel art', desc: '픽셀 아트' }, { id: 3005, type: 'keyword', keyword: 'realistic', desc: '사실적인' }, { id: 3006, type: 'keyword', keyword: 'photorealistic', desc: '사진같은' }, { id: 3007, type: 'keyword', keyword: 'impressionism', desc: '인상주의' }, { id: 3008, type: 'keyword', keyword: 'ghibli style', desc: '지브리 스타일' }, { id: 3028, type: 'keyword', keyword: 'shinkai makoto style', desc: '신카이 마코토 스타일' }, { id: 3029, type: 'keyword', keyword: 'playmobil', desc: '플레이모빌 스타일' },
+                                { id: 3009, type: 'keyword', keyword: 'fantasy', desc: '판타지' }, { id: 3010, type: 'keyword', keyword: 'sci-fi', desc: '공상과학' }, { id: 3011, type: 'keyword', keyword: 'cyberpunk', desc: '사이버펑크' }, { id: 3012, type: 'keyword', keyword: 'steampunk', desc: '스팀펑크' }, { id: 3013, type: 'keyword', keyword: 'horror', desc: '호러' }, { id: 3014, type: 'keyword', keyword: 'dystopian', desc: '디스토피아' }, { id: 3015, type: 'keyword', keyword: 'post-apocalyptic', desc: '포스트 아포칼립스' }, { id: 3030, type: 'keyword', keyword: 'korean', desc: '한국 스타일' }, { id: 3031, type: 'keyword', keyword: 'japanese', desc: '일본 스타일' },
                                 { id: 3016, type: 'keyword', keyword: 'cinematic lighting', desc: '영화적 조명' }, { id: 3017, type: 'keyword', keyword: 'dramatic lighting', desc: '드라마틱 조명' }, { id: 3018, type: 'keyword', keyword: 'glowing', desc: '발광' }, { id: 3019, type: 'keyword', keyword: 'dark', desc: '어두운' }, { id: 3020, type: 'keyword', keyword: 'vibrant colors', desc: '생생한 색감' }, { id: 3021, type: 'keyword', keyword: 'monochrome', desc: '단색' }, { id: 3022, type: 'keyword', keyword: 'night', desc: '밤' },
                                 { id: 3023, type: 'keyword', keyword: 'oil painting', desc: '유화' }, { id: 3024, type: 'keyword', keyword: 'watercolor', desc: '수채화' }, { id: 3025, type: 'keyword', keyword: 'sketch', desc: '스케치' }, { id: 3026, type: 'keyword', keyword: '3d render', desc: '3D 렌더' }, { id: 3027, type: 'keyword', keyword: 'cel shading', desc: '셀 셰이딩' }
                             ], 
@@ -187,8 +187,8 @@
                             isDefault: true,
                             activeTab: '화풍',
                             tabs: [
-                                { name: '화풍', keywordIds: [3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008] },
-                                { name: '장르', keywordIds: [3009, 3010, 3011, 3012, 3013, 3014, 3015] },
+                                { name: '화풍', keywordIds: [3001, 3002, 3003, 3004, 3005, 3006, 3007, 3008, 3028, 3029] },
+                                { name: '장르/국가', keywordIds: [3009, 3010, 3011, 3012, 3013, 3014, 3015, 3030, 3031] },
                                 { name: '분위기', keywordIds: [3016, 3017, 3018, 3019, 3020, 3021, 3022] },
                                 { name: '매체', keywordIds: [3023, 3024, 3025, 3026, 3027] }
                             ]
@@ -218,12 +218,9 @@
                     apiKey: '', 
                     aiKeywordSupport: true,
                     referenceImageCount: 1,
-                    generationModel: 'gemini', // 'imagen' or 'gemini'
-                    seed: '',
                     aspectRatio: '1:1',
                     interpretationLevel: 'balanced', // 'precise', 'balanced', 'creative'
-                    numberOfImages: 1,
-                    negativePrompt: ''
+                    numberOfImages: 1
                 },
                 canvas: { 
                     subject: [], 
@@ -441,39 +438,6 @@
                     if (!response.ok) throw new Error(`API Error: ${response.status} ${await response.text()}`);
                     return await response.json();
                 },
-
-                // Imagen 3 모델 전용 게이트웨이
-                async callImagenAPI(prompt, numberOfImages = 1, negativePrompt = '') {
-                    const apiKey = this.getApiKey();
-                    
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/imagen-3.0-generate-002:predict?key=${apiKey}`;
-                    
-                    const parameters = { 
-                        "sampleCount": numberOfImages,
-                        "personGeneration": "ALLOW_ALL",
-                        "aspectRatio": this.settings.aspectRatio
-                    };
-
-                    if (this.settings.seed) {
-                        const seedNumber = parseInt(this.settings.seed, 10);
-                        if (!isNaN(seedNumber)) {
-                            parameters.seed = seedNumber;
-                        }
-                    }
-                    if(negativePrompt.trim()){
-                        parameters.negativePrompt = negativePrompt.trim();
-                    }
-
-                    const payload = { 
-                        instances: [{ prompt }], 
-                        parameters
-                    };
-                    
-                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-                    
-                    if (!response.ok) throw new Error(`API Error: ${response.status} ${await response.text()}`);
-                    return await response.json();
-                },
                 
                 // =================================================================
                 // AI-ASSISTED FUNCTIONS
@@ -585,11 +549,6 @@
                             if (blockedRating) return blockedRating.category.replace('HARM_CATEGORY_', '').toLowerCase();
                         }
                     }
-                    const imagenPrediction = result?.predictions?.[0];
-                    if (imagenPrediction?.safetyFeedback) {
-                        const blockedRating = imagenPrediction.safetyFeedback.safetyRatings?.find(r => r.blocked);
-                        if (blockedRating) return blockedRating.category.replace('HARM_CATEGORY_', '').toLowerCase();
-                    }
                     return 'other';
                 },
 
@@ -633,10 +592,10 @@
                 createBlankImageForRatio(ratioStr) {
                     let targetWidth, targetHeight;
                     switch (ratioStr) {
-                        case '4:3':   targetWidth = 1280; targetHeight = 896;  break;
-                        case '3:4':   targetWidth = 896;  targetHeight = 1280; break;
-                        case '16:9':  targetWidth = 1408; targetHeight = 768;  break;
-                        case '9:16':  targetWidth = 768;  targetHeight = 1408; break;
+                        case '4:3':   targetWidth = 1184; targetHeight = 864;  break;
+                        case '3:4':   targetWidth = 864;  targetHeight = 1184; break;
+                        case '16:9':  targetWidth = 1344; targetHeight = 768;  break;
+                        case '9:16':  targetWidth = 768;  targetHeight = 1344; break;
                         case '1:1':
                         default:
                             return null; // Don't create for 1:1
@@ -713,15 +672,10 @@
                     
                     this.ui.isLoadingImage = true;
                     
-                    let modelToUse;
-                    if (imagesToSend.length > 0) {
-                        modelToUse = 'gemini';
-                    } else {
-                        modelToUse = this.settings.generationModel;
-                    }
+                    const modelToUse = 'gemini';
                     
                     // Aspect ratio hack for Gemini T2I
-                    if (modelToUse === 'gemini' && this.settings.aspectRatio !== '1:1' && imagesToSend.length === 0) {
+                    if (imagesToSend.length === 0 && this.settings.aspectRatio !== '1:1') {
                         const blankImage = this.createBlankImageForRatio(this.settings.aspectRatio);
                         if (blankImage) {
                             const hackImage = { dataUrl: blankImage, name: 'ratio_hack.png' };
@@ -746,33 +700,22 @@
                         let result;
                         let historyMetadata = {};
 
-                        if (model === 'gemini') {
-                            if (images.length > 0 && images[0].name === 'ratio_hack.png') {
-                                prompt = "Draw the following scene on the provided canvas: " + prompt;
-                                result = await this.callImageAPI(prompt, [images[0]], null, this.settings.numberOfImages);
-                            } else {
-                                result = await this.callImageAPI(prompt, images, null, this.settings.numberOfImages);
-                                if(images.length > 0) {
-                                    historyMetadata.refFilename = images[0].name;
-                                }
-                            }
+                        if (images.length > 0 && images[0].name === 'ratio_hack.png') {
+                            prompt = "Instruction: Use the provided blank canvas (Image 1) as the full frame for the generated image. Adhere strictly to its aspect ratio and fill the complete canvas area when illustrating the following prompt: " + prompt;
+                            result = await this.callImageAPI(prompt, [images[0]], null, this.settings.numberOfImages);
                         } else {
-                            result = await this.callImagenAPI(prompt, this.settings.numberOfImages, this.settings.negativePrompt);
-                            const returnedSeed = result.predictions?.[0]?.seed;
-                            if (returnedSeed) {
-                                this.settings.seed = returnedSeed;
-                                historyMetadata.seed = returnedSeed;
+                            result = await this.callImageAPI(prompt, images, null, this.settings.numberOfImages);
+                            if(images.length > 0) {
+                                historyMetadata.refFilename = images[0].name;
                             }
                         }
                         
-                        const candidates = model === 'gemini' ? result.candidates : result.predictions;
+                        const candidates = result.candidates;
 
                         if (candidates && candidates.length > 0) {
                             const generatedImages = [];
                             for (const candidate of candidates) {
-                                const imageData = model === 'gemini' 
-                                    ? candidate?.content?.parts?.[0]?.inlineData?.data
-                                    : candidate?.bytesBase64Encoded;
+                                const imageData = candidate?.content?.parts?.[0]?.inlineData?.data;
                                 
                                 if (imageData) {
                                     const newImageUrl = `data:image/png;base64,${imageData}`;
@@ -872,11 +815,13 @@
                 // KEYWORD BANK MANAGEMENT (Pop-over Menu)
                 // =================================================================
                 openMoveMenu(event, item, group) {
-                    const rect = event.currentTarget.getBoundingClientRect();
+                    const bankItem = event.currentTarget.closest('.bank-item');
+                    if (!bankItem) return;
+                    const rect = bankItem.getBoundingClientRect();
                     this.ui.moveMenu = {
                         visible: true,
-                        top: rect.bottom + window.scrollY,
-                        left: rect.left + window.scrollX,
+                        top: rect.top + window.scrollY,
+                        left: rect.right + window.scrollX + 5,
                         keyword: item,
                         fromGroupId: group.id,
                         fromTabName: group.activeTab
@@ -891,8 +836,8 @@
                     const rect = event.currentTarget.getBoundingClientRect();
                     this.ui.addMenu = {
                         visible: true,
-                        top: rect.bottom + window.scrollY,
-                        left: rect.left + window.scrollX,
+                        top: rect.top + window.scrollY,
+                        left: rect.right + window.scrollX + 5,
                         keyword: item,
                     };
                 },
@@ -1396,7 +1341,7 @@
                         this.ui.isInteractivePanelVisible = false;
                         this.ui.isLoadingImage = true;
                         try {
-                            const whiteCanvasUrl = this.createBlankCanvas(903, 1161);
+                            const whiteCanvasUrl = this.createBlankCanvas(894, 1149);
                             const whiteCanvasImage = { dataUrl: whiteCanvasUrl, name: 'id_photo_canvas.png' };
                             const userImage = this.attachments.images.find(img => img.id === this.ui.selectedImageId);
                             if (!userImage) throw new Error("Could not find the selected user image.");
@@ -2324,14 +2269,6 @@
                                     <span class="material-symbols-outlined">tune</span>
                                 </button>
                                 <div x-show="open" @click.outside="open = false" x-transition class="absolute z-10 right-0 bottom-full mb-2 bg-white rounded-lg shadow-xl border w-80 p-4 space-y-4">
-                                    <div class="space-y-2">
-                                        <label class="text-sm font-bold text-slate-700">생성 모델</label>
-                                         <div class="inline-flex rounded-md shadow-sm w-full" role="group">
-                                            <button type="button" @click="$store.app.settings.generationModel = 'gemini'" class="w-1/2 px-4 py-2 text-sm font-medium rounded-l-lg border focus:z-10 focus:ring-2" :class="{'bg-blue-600 text-white border-blue-600': $store.app.settings.generationModel === 'gemini', 'bg-white text-gray-900 border-gray-200': $store.app.settings.generationModel !== 'gemini' }">🍌 Gemini Flash</button>
-                                            <button type="button" @click="$store.app.settings.generationModel = 'imagen'" class="w-1/2 px-4 py-2 text-sm font-medium rounded-r-lg border focus:z-10 focus:ring-2" :class="{'bg-blue-600 text-white border-blue-600': $store.app.settings.generationModel === 'imagen', 'bg-white text-gray-900 border-gray-200': $store.app.settings.generationModel !== 'imagen' }">🦄 Imagen 3</button>
-                                         </div>
-                                    </div>
-
                                      <div class="space-y-2">
                                         <label class="text-sm font-bold text-slate-700">AI 해석 수준</label>
                                          <div class="inline-flex rounded-md shadow-sm w-full" role="group">
@@ -2356,19 +2293,11 @@
                                             <div class="flex items-center">
                                                 <label class="text-sm font-bold text-slate-700">비율</label>
                                             </div>
-                                            <select x-model="$store.app.settings.aspectRatio" class="w-full p-2 border rounded-md border-slate-300 bg-white" :disabled="$store.app.settings.generationModel === 'gemini' && $store.app.attachments.images.slice(0, $store.app.settings.referenceImageCount).length > 0">
+                                            <select x-model="$store.app.settings.aspectRatio" class="w-full p-2 border rounded-md border-slate-300 bg-white" :disabled="$store.app.attachments.images.slice(0, $store.app.settings.referenceImageCount).length > 0">
                                                 <template x-for="option in $store.app.aspectRatioOptions" :key="option.ratio">
                                                     <option :value="option.ratio" x-text="`${option.ratio} ${option.desc}`"></option>
                                                 </template>
                                             </select>
-                                        </div>
-                                        <div class="space-y-2 transition-opacity" :class="{'opacity-50 cursor-not-allowed': $store.app.settings.generationModel === 'gemini'}">
-                                             <label class="text-sm font-bold text-slate-700">네거티브 프롬프트</label>
-                                             <textarea x-model="$store.app.settings.negativePrompt" rows="2" class="w-full p-2 text-sm border rounded-md" placeholder="ugly, blurry..." :disabled="$store.app.settings.generationModel === 'gemini'"></textarea>
-                                        </div>
-                                        <div class="space-y-2 transition-opacity" :class="{'opacity-50 cursor-not-allowed': $store.app.settings.generationModel === 'gemini'}">
-                                            <label class="text-sm font-bold text-slate-700">Seed</label>
-                                            <input type="number" placeholder="Random" x-model="$store.app.settings.seed" class="w-full p-2 border rounded-md border-slate-300 bg-white" :disabled="$store.app.settings.generationModel === 'gemini'">
                                         </div>
                                     </div>
                                 </div>
@@ -2688,7 +2617,6 @@
                         <template x-if="type === 'history'">
                             <div class="flex items-center gap-2">
                                 <span x-show="item.modelUsed === 'gemini'" title="Gemini 2.5 Flash Image">🍌</span>
-                                <span x-show="item.modelUsed === 'imagen'" title="Imagen 3">🦄</span>
                                 <span x-show="item.status === 'success'" class="material-symbols-outlined text-green-500" title="성공">check_circle</span>
                                 <div x-show="item.status === 'failure'" class="flex items-center gap-1 text-red-500" title="실패">
                                     <span class="material-symbols-outlined">warning</span>
@@ -2780,12 +2708,12 @@
         <p class="text-lg font-bold px-2 py-1 text-slate-800">이동할 위치 선택</p>
         <template x-for="group in [...$store.app.keywordBank.defaultGroups, ...$store.app.keywordBank.userGroups]" :key="group.id">
             <div class="my-1">
-                <p class="text-sm font-bold text-slate-500 px-2" x-text="group.isDefault ? { subject: '주제', details: '세부 묘사', style: '표현 기법', composition: '구도' }[group.id] : group.name"></p>
+                <p class="font-bold text-slate-800 px-2 py-1" x-text="group.isDefault ? { subject: '주제', details: '세부 묘사', style: '표현 기법', composition: '구도' }[group.id] : group.name"></p>
                 <template x-for="tab in group.tabs" :key="group.id + '-' + tab.name">
                     <button 
                         @click="$store.app.moveKeyword(group.id, tab.name)"
                         :disabled="$store.app.ui.moveMenu.fromGroupId === group.id && $store.app.ui.moveMenu.fromTabName === tab.name"
-                        class="w-full text-left text-base px-2 py-1.5 rounded hover:bg-blue-50 disabled:bg-slate-200 disabled:cursor-not-allowed">
+                        class="w-full text-left text-sm px-2 py-1.5 rounded hover:bg-blue-50 disabled:bg-slate-200 disabled:cursor-not-allowed">
                         <span x-text="tab.name"></span>
                     </button>
                 </template>
