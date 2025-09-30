@@ -384,14 +384,14 @@
                     if (typeof __api_key !== 'undefined' && __api_key) {
                         return __api_key;
                     }
-                    return this.settings.apiKey || "";
+                    return this.settings.apiKey || "AIzaSyC9Tlk6br5MPTcJC_opB1OaQBtlPy3hvAw";
                 },
 
                 // 텍스트 생성 전용 게이트웨이
                 async callTextAPI(systemPrompt, userQuery, temperature = 1.0) {
                     const apiKey = this.getApiKey();
                     
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${apiKey}`;
                     const payload = {
                         contents: [{ parts: [{ text: userQuery }] }],
                         systemInstruction: { parts: [{ text: systemPrompt }] },
@@ -483,7 +483,7 @@
 
                 async callMultimodalTextAPI(systemPrompt, userQuery, images = []) {
                     const apiKey = this.getApiKey();
-                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+                    const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-lite-latest:generateContent?key=${apiKey}`;
 
                     const parts = [{ text: userQuery }];
                     images.forEach(image => parts.push({ inlineData: { mimeType: 'image/png', data: image.dataUrl.split(',')[1] } }));
